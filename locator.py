@@ -4,21 +4,20 @@ import colored
 from bs4 import BeautifulSoup
 from classes import *
 
-
+# Locator
 HOST = 'http://track.ruptela.lt'
 LOGIN = 'ExcelProdutos'
 PASS = 'sLzN58LZ'
-
+API_HOST = 'http://api.fm-track.com'
+API_KEY = "Al-xrBlaeH-JXIj0RuPQT6FwuPFrZZGd"
 
 s = requests.Session()
-
 login_dict = {
     'sl': LOGIN,
     'ps': PASS
 }
-
-r = s.post(HOST + '/administrator/authentication/login', login_dict)
-print(r)
+r = s.post(HOST + '/administrator/authentication/login', {'sl': LOGIN, 'ps': PASS })
+print(f'status code: {r.status_code}')
 
 
 def create_sim(phone, client, apn='m2m.arqia.br'):
@@ -41,7 +40,7 @@ def create_sim(phone, client, apn='m2m.arqia.br'):
     r = s.post(HOST + '/administrator/connection/create', params)
     soup = BeautifulSoup(r.text, 'html.parser')
     try:
-        string = color(soup('div', 'error')[0].contents, 'red', 'WHITE')
+        string = color(soup('div', 'error')[0].contents[0], 'red', 'WHITE')
         success = False
     except:
         string = color('OK!', 'green', 'white')
@@ -56,6 +55,7 @@ def create_object(
         hardware,
         phone,
         client,
+        description='.',
         drivers_phone='',
         serial='',
         template_id='672',
@@ -74,10 +74,10 @@ def create_object(
         password='',
 ):
     try:
-        phone_id = get_phone_id(phone)
+        phone_id = _get_phone_id(phone)
     except:
         create_sim(phone, client)
-        phone_id = get_phone_id(phone)
+        phone_id = _get_phone_id(phone)
     params = {
         'client': str(client),                  # Client ID - 51879=Colorado
         'object': str(name),                    # Object Name
@@ -132,30 +132,50 @@ def create_object(
     print(f'create_object: {name} * {string}')
     return success
 
-
 def color(msg, bg='RED', fg='WHITE'):
     bg = eval(f'colored.back.{bg.upper()}')
     fg = eval(f'colored.fore.{fg.upper()}')
     return f'{bg}{fg}{colored.style.BOLD}{msg}{colored.style.RESET}'
 
-
-def get_phone_id(phone):
+def _get_phone_id(phone):
     phone = str(phone)
     r = s.get(HOST + '/administrator/objects/edit', params={'cmd': 'edit', 'nr': '558737'})
-    soup = BeautifulSoup(r.text)
+    soup = BeautifulSoup(r.text, 'html.parser')
     for tag in soup.find(id='oconnection').find_all('option'):
         if tag.text == phone:
             return tag['value']
     else:
         raise Exception('Phone not found!')
 
-
 def create_clients():
-    print('Obtendo clientes...')
     r = s.get(HOST+'/administrator/clients/getList', headers=REQUEST_HEADERS)
     for client in r.json():
         Client(client)
+    print(f'{len(Client.all)} clientes criados.')
 
+
+def create_all_objects():
+    params = {
+        "version": "1",
+        "api_key": API_KEY,
+    }
+    r = requests.get(API_HOST + '/objects', params=params)
+    for i in r.json():
+        Object(i)
+    print(f'{len(Object.all)} objetos criados.')
+
+def select_hardware():
+    for i, hw in enumerate(hardwares):
+        print(f'[ID:{i}] {hw}')
+    print('\n\n')
+    index = int(input('Selecione o ID do hardware a ser utilizado: '))
+    return list(hardwares.keys())[index]
+
+def select_client():
+    for client in Client.all:
+        print(client)
+    print('\n\n')
+    return Client.all[int(input('Selecione o cliente que deseja atribuir as modificações: '))] # sanitanizar input
 
 
 hardwares = {
@@ -168,6 +188,7 @@ hardwares = {
     'FM-Tco4-LCV':      (140, 321),
     'Plug4':            (139, 317)
 }
+
 
 REQUEST_HEADERS = {
     'Connection': 'keep-alive',

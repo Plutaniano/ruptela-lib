@@ -1,22 +1,17 @@
 import datetime
 import requests
-from classes import Object,Packet
+from classes import Object, Packet
 
-KEY = "Al-xrBlaeH-JXIj0RuPQT6FwuPFrZZGd"
 URL = "https://api.fm-track.com/"
 
-
-def getAllObjects(key=KEY):
+def create_all_objects():
     params = {
         "version": "1",
         "api_key": key,
     }
 
     r = requests.get(URL + 'objects', params=params)
-    return r.json()
-
-def create_all_objects():
-    for i in getAllObjects():
+    for i in r.json():
         Object(i)
 
 

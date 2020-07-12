@@ -3,9 +3,8 @@ import requests
 import datetime as dt
 import matplotlib.pyplot as plt
 
-URL = "https://api.fm-track.com/"
 KEY = 'Al-xrBlaeH-JXIj0RuPQT6FwuPFrZZGd'
-HOST = 'http://api.fm-track.com'
+HOST = 'httpS://api.fm-track.com'
 
 
 class Object:
@@ -17,15 +16,11 @@ class Object:
         self.imei = d["imei"]
         self.all.append(self)
 
-    def get(**kwargs):
-        try:
-            for key in kwargs.keys():
-                for obj in Object.all:
-                    if getattr(obj, key) == kwargs[key]:
-                        return obj
-            print('Nao foi possivel encontrar o objeto')
-        except:
-            raise ValueError('Nao foi possivel encontrar o objeto')
+    def get_by_name(name):
+        for i in Object.all:
+            if i.name == name:
+                return i
+        raise Exception('Object not found.')
 
     def __repr__(self):
         return f'[Obj][{self.name}]'
@@ -84,17 +79,11 @@ class Client:
     def __repr__(self):
         return f'[ID:{self.index}] {self.company}'
 
-def create_all_objects():
-    params = {
-        "version": "1",
-        "api_key": key,
-    }
-
-    print('Criando objetos...')
-    r = requests.get(URL + 'objects', params=params)
-    for i in r.json():
-        Object(i)
-
+    def get_client_by_name(name):
+        for i in Client.all:
+            if i.name == name:
+                return i
+        raise Exception('Client not found.')
 
 def time_convert(time):
     if isinstance(time, str):
