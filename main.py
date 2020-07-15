@@ -48,14 +48,15 @@ if __name__ == '__main__':
         print_header()
         IMEI = input('Escaneie o IMEI do dispositivo: ')
 
+        print_header()
+        SN = input('Escaneie o Serial Number do dispositivo: ')
+
 
         name = f'{CLIENT.company} [{IMEI[-6:]}]'
         phone = ICCID_to_phone(ICCID)
 
 
-        create_sim(phone, CLIENT.id)
-        print('\n\n')
-        create_object(name, IMEI, HARDWARE, phone, CLIENT.id)
+        create_object(name, IMEI, HARDWARE, phone, CLIENT.id, serial=SN)
         print('\n\n')
 
         print('Pressione x para sair ou qualquer outra tecla para repetir: ')

@@ -1,23 +1,55 @@
-from datetime import datetime, timedelta
 import requests
 import colored
+from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 from classes import *
 
 # Locator
-HOST = 'http://track.ruptela.lt'
-LOGIN = 'ExcelProdutos'
-PASS = 'sLzN58LZ'
+LOCATOR_HOST = 'http://track.ruptela.lt'
+LOCATOR_LOGIN = 'ExcelProdutos'
+LOCATOR_PASS = 'sLzN58LZ'
 API_HOST = 'http://api.fm-track.com'
 API_KEY = "Al-xrBlaeH-JXIj0RuPQT6FwuPFrZZGd"
 
-s = requests.Session()
-login_dict = {
-    'sl': LOGIN,
-    'ps': PASS
-}
-r = s.post(HOST + '/administrator/authentication/login', {'sl': LOGIN, 'ps': PASS })
-print(f'status code: {r.status_code}')
+class Locator:
+    def __init__(self):
+        self.login()
+        if self.logged_in:
+            self.clients = self.create_clients()
+
+    def login(self):
+        self.session = requests.Session()
+        login_req = self.session.post(LOCATOR_HOST + '/administrator/authentication/login', {'sl': LOCATOR_LOGIN, 'ps': LOCATOR_PASS })
+        if login_req.status_code != 200:
+            self.logged_in = False
+            print('Não foi possível logar no Locator.')
+        else:
+            self.logged_in = True
+            print('Login OK!')
+    
+    def create_clients(self):
+        headers = {'X-Requested-With': 'XMLHttpRequest'}
+        clients_req = self.session.get(LOCATOR_HOST + '/administrator/clients/getList', headers=headers)
+        for client in clients_req.json():
+            client = Client(client, self)
+            setattr(self, client.company, client)
+        print(f'{len(Client.all)} clientes criados.')
+        return Client.all         
+
+
+    def create_objects(self):
+        for client in self.clients:
+            params = {
+                "version": "1",
+                "api_key": client.api_key,
+            }
+            obj_req = self.session.get(API_HOST + '/objects', params=params)
+            for obj in obj_req.json():
+                obj = Object(obj)
+                client.objects.append(obj)
+            print(f'{len(client.objects)} objetos criados para o cliente {client.company}.')
+
+
 
 
 def create_sim(phone, client, apn='m2m.arqia.br'):
@@ -122,6 +154,7 @@ def create_object(
         'create': 'Create',                     # Create
     }
     r = s.post(HOST + '/administrator/objects/create', params)
+    check_status(r)
     soup = BeautifulSoup(r.text, 'html.parser')
     try:
         string = color(soup('div', 'error')[0].contents, 'red', 'WHITE')
@@ -129,13 +162,16 @@ def create_object(
     except:
         string = color(soup('span', {'class': 'done'})[0].text, 'green', 'white')
         success = True
-    print(f'create_object: {name} * {string}')
+    print(f'[*] Criação do objeto: {name}')
+    print(f'--- status {string}')
     return success
+
 
 def color(msg, bg='RED', fg='WHITE'):
     bg = eval(f'colored.back.{bg.upper()}')
     fg = eval(f'colored.fore.{fg.upper()}')
     return f'{bg}{fg}{colored.style.BOLD}{msg}{colored.style.RESET}'
+
 
 def _get_phone_id(phone):
     phone = str(phone)
@@ -147,22 +183,9 @@ def _get_phone_id(phone):
     else:
         raise Exception('Phone not found!')
 
-def create_clients():
-    r = s.get(HOST+'/administrator/clients/getList', headers=REQUEST_HEADERS)
-    for client in r.json():
-        Client(client)
-    print(f'{len(Client.all)} clientes criados.')
 
 
-def create_all_objects():
-    params = {
-        "version": "1",
-        "api_key": API_KEY,
-    }
-    r = requests.get(API_HOST + '/objects', params=params)
-    for i in r.json():
-        Object(i)
-    print(f'{len(Object.all)} objetos criados.')
+
 
 def select_hardware():
     for i, hw in enumerate(hardwares):
@@ -171,11 +194,25 @@ def select_hardware():
     index = int(input('Selecione o ID do hardware a ser utilizado: '))
     return list(hardwares.keys())[index]
 
+
 def select_client():
     for client in Client.all:
-        print(client)
+        print(f'[{client.index}] {client.company}')
     print('\n\n')
-    return Client.all[int(input('Selecione o cliente que deseja atribuir as modificações: '))] # sanitanizar input
+    index = int(input('Selecione o cliente que deseja atribuir as modificações: '))
+    return Client.all[index] # sanitanizar input
+
+
+def check_status(http_req):
+    if http_req.status_code != 200:
+        print(f'URL: {http_req.url}')
+        print(f'Status Code: {http_req.status_code}')
+        print(f'Erro no pedido HTTP, objeto response na variavel req_debug')
+        global req_debug
+        req_debug = http_req
+        raise Exception('HTTP request error')
+    else:
+        return True
 
 
 hardwares = {
@@ -201,3 +238,6 @@ REQUEST_HEADERS = {
     'Referer': 'http://track.ruptela.lt/administrator/clients',
     'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
 }
+
+if __name__ == '__main__':
+    l = Locator()
