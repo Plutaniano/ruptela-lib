@@ -1,6 +1,8 @@
 import sys
 import time
 import os
+import arqia
+from locator import Locator
 
 def print_header():
     clear()
@@ -22,24 +24,31 @@ def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
 
 
+def select_client(locator):
+    for client in locator.clients:
+        print(f'[{client.index}] {client.company}')
+    print('\n\n')
+    index = int(input('Selecione o cliente que deseja atribuir as modificações: '))
+    return locator.clients[index]
+
+
+
+
+
 if __name__ == '__main__':
     print_header()
 
     print('[*] Abrindo site da Arqia...')
-    from arqia import *
+    arqia.login(arqia.options())
 
     print('[*] Logando no Locator...')
-    from locator import *
-
-    print('[*] Obtendo clientes...',)
-    create_clients()
-    time.sleep(1)
+    l = Locator()
 
     print_header()
-    CLIENT = select_client()
+    CLIENT = select_client(l)
 
     print_header()
-    HARDWARE = select_hardware()
+    HARDWARE = select_hardware(l)
 
     while 1:
         print_header()

@@ -31,6 +31,7 @@ class Client:
         for user in web_req.json():
             if user['company'] == self.company:
                 web_user = Web_User(user, locator)
+                setattr(self, web_user.login, web_user)
                 web_users.append(web_user)
         return web_users
 
@@ -59,6 +60,14 @@ class Web_User:
         headers = {'Authorization': token}
         api_key_req = locator.session.get('https://gtfrota.fm-track.com/gateway/user-service/v20181205/users/public-api-keys/', headers=headers)
         return api_key_req.json()['items'][0]['id']
+    
+    def __repr__(self):
+        return f'[web id:{id}] {username}'
+
+
+class Hardware:
+    
+        
 
 class Object:
     all = []

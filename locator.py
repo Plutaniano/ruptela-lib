@@ -16,6 +16,7 @@ class Locator:
         self.login()
         if self.logged_in:
             self.clients = self.create_clients()
+            self.hardwares = self.create_hardwares()
 
     def login(self):
         self.session = requests.Session()
@@ -49,6 +50,10 @@ class Locator:
                 client.objects.append(obj)
             print(f'{len(client.objects)} objetos criados para o cliente {client.company}.')
 
+    def create_hardwares(self):
+        # to do...
+        return None
+
 
 
 
@@ -81,7 +86,8 @@ def create_sim(phone, client, apn='m2m.arqia.br'):
     return success
 
 
-def create_object(
+def create_new_object(
+        self,
         name,
         imei,
         hardware,
@@ -195,13 +201,6 @@ def select_hardware():
     return list(hardwares.keys())[index]
 
 
-def select_client():
-    for client in Client.all:
-        print(f'[{client.index}] {client.company}')
-    print('\n\n')
-    index = int(input('Selecione o cliente que deseja atribuir as modificações: '))
-    return Client.all[index] # sanitanizar input
-
 
 def check_status(http_req):
     if http_req.status_code != 200:
@@ -224,19 +223,6 @@ hardwares = {
     'FM-Tco4':          (136, 307),
     'FM-Tco4-LCV':      (140, 321),
     'Plug4':            (139, 317)
-}
-
-
-REQUEST_HEADERS = {
-    'Connection': 'keep-alive',
-    'Accept': 'application/javascript, application/json',
-    'X-Requested-With': 'XMLHttpRequest',
-    'X-Range': 'items=0-999',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36 OPR/68.0.3618.173',
-    'Range': 'items=0-999',
-    'Content-Type': 'application/x-www-form-urlencoded',
-    'Referer': 'http://track.ruptela.lt/administrator/clients',
-    'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
 }
 
 if __name__ == '__main__':
