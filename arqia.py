@@ -37,6 +37,11 @@ class Arqia:
         self.driver.get(ARQIA_HOST + '/relatorios/')
         button = self.driver.find_element_by_css_selector('table tbody tr td div input')
         files = os.listdir('.')
+        for file in files:
+            if 'relatorio' in file:
+                os.remove(file)
+        files = os.listdir('.')
+
 
         button.click()
         time.sleep(1)
@@ -62,14 +67,13 @@ class Arqia:
         options.add_experimental_option("prefs",prefs)
         self.options = options
 
-    def ICCID_to_phone(self, ICCID):
-        self.driver.get(ARQIA_HOST + '/simcards/')
-        form = self.driver.find_element_by_id('vB')
-        form.send_keys(ICCID)
-        form.send_keys(Keys.RETURN)
-        soup = BeautifulSoup(self.driver.page_source, 'html.parser')
-        phone = soup('td')[5].text
-        return phone
+    def find_by_ICCID(self, ICCID):
+        for sim in self.simcards:
+            if sim.ICCID == ICCID:
+                return sim
+
+    def __repr__(self):
+        return f'[Arqia] {len(self.simcards)} sim cards.'
 
 class Sim_Card:
     def __init__(self, line):

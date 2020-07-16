@@ -53,6 +53,12 @@ class Locator:
     def create_hardwares(self):
         # to do...
         return None
+    
+    def __repr__(self):
+        objs = 0
+        for client in self.clients:
+            objs += len(client.objects)
+        return f'[Locator] {len(self.clients)} clientes, {objs}'
 
 
 

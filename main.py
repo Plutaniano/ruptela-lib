@@ -3,6 +3,7 @@ import time
 import os
 import arqia
 from locator import Locator
+from arqia import Arqia
 
 def print_header():
     clear()
@@ -39,7 +40,7 @@ if __name__ == '__main__':
     print_header()
 
     print('[*] Abrindo site da Arqia...')
-    arqia.login(arqia.options())
+    a = Arqia()
 
     print('[*] Logando no Locator...')
     l = Locator()

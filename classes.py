@@ -20,6 +20,8 @@ class Client:
         self.objects = []
 
         self.web_users = self.create_web_users(locator)
+        self.api_key = self.web_users[0].api_key
+        self.objects = self.create_objects()
 
     def __repr__(self):
         return f'[{self.id}] {self.company}'
@@ -34,6 +36,21 @@ class Client:
                 setattr(self, web_user.login, web_user)
                 web_users.append(web_user)
         return web_users
+    
+    
+    def create_objects(self):
+        params={
+            "version": "1",
+            "api_key": self.web_users[0].api_key
+        }
+        objs_req = requests.get("http://api.fm-track.com/objects", params=params)
+        objs = []
+        for obj in objs_req.json():
+            objs.append(Object(obj))
+        return objs
+
+
+
 
 
 class Web_User:
@@ -51,8 +68,10 @@ class Web_User:
         self.email = d['email']
         self.source = d['source']
         self.link = f'{LOCATOR_HOST}/administrator/webusers/redirectAdmin?cmd=redirect_adminTT2&id={self.id}&is_tt2=1'
-        self.api_key = self.get_api_key(locator)
-
+        try:
+            self.api_key = self.get_api_key(locator)
+        except:
+            pass
     def get_api_key(self, locator):
         api_key_req = locator.session.get(self.link)
         token = api_key_req.history[0].headers['Location']
@@ -62,11 +81,11 @@ class Web_User:
         return api_key_req.json()['items'][0]['id']
     
     def __repr__(self):
-        return f'[web id:{id}] {username}'
+        return f'[web id:{self.id}] {self.username}'
 
 
 class Hardware:
-    
+    pass    
         
 
 class Object:
@@ -99,18 +118,23 @@ class Object:
         }
 
         r = requests.get(HOST + f'/objects/{self.id}/coordinates', params=params)
-        print(r)
+        print(f'[{self.name}] Requisitando pacotes...', end="")
+        packets = []
         try:
             for i in r.json()['items']:
-                yield i
+                print('*', end='')
+                packets.append(i)
 
             while r.json()['continuation_token'] != None:
                 params['continuation_token'] = r.json()['continuation_token']
                 r = requests.get(HOST + f'/objects/{self.id}/coordinates', params=params)
+                print('*', end='')
                 for i in r.json()['items']:
-                    yield i
+                    packets.append(i)
         except:
             print(r.json())
+        print(f'\n{len(packets)} pacotes.')
+        return packets
 
 
 class Packet:
