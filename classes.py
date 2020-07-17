@@ -8,6 +8,7 @@ LOCATOR_HOST = 'http://track.ruptela.lt'
 
 class Client:
     all = []
+
     def __init__(self, d, locator):
         self.index = len(Client.all)
         self.all.append(self)
@@ -37,7 +38,6 @@ class Client:
                 web_users.append(web_user)
         return web_users
     
-    
     def create_objects(self):
         params={
             "version": "1",
@@ -48,6 +48,14 @@ class Client:
         for obj in objs_req.json():
             objs.append(Object(obj))
         return objs
+
+    @classmethod
+    def select_client(cls):
+        for client in cls.all:
+            print(f'[{client.index}] {client.company}')
+        print('\n\n')
+        index = int(input('Selecione o cliente que deseja atribuir as modificações: '))
+        return cls.all[index]
 
 
 
@@ -95,6 +103,17 @@ class Hardware:
         self.hw_version = d['hw_version']
         self.soft_id = d['soft_id']
         self.soft_version = d['soft_version']
+
+    @classmethod
+    def select_hardware(cls):
+        for i, hw in enumerate(cls.all):
+            print(f'[ID:{i}] {hw}')
+        print('\n\n')
+        index = int(input('Selecione o ID do hardware a ser utilizado: '))
+        return cls.all[index]
+
+    def __repr__(self):
+        return f'[HW] {self.name}'
         
 
 class Object:

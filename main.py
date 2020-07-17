@@ -2,6 +2,7 @@ import sys
 import time
 import os
 import arqia
+from classes import Client, Web_User, Hardware, Packet, Object
 from locator import Locator
 from arqia import Arqia
 
@@ -25,16 +26,6 @@ def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
 
 
-def select_client(locator):
-    for client in locator.clients:
-        print(f'[{client.index}] {client.company}')
-    print('\n\n')
-    index = int(input('Selecione o cliente que deseja atribuir as modificações: '))
-    return locator.clients[index]
-
-
-
-
 
 if __name__ == '__main__':
     print_header()
@@ -46,10 +37,10 @@ if __name__ == '__main__':
     l = Locator()
 
     print_header()
-    CLIENT = select_client(l)
+    CLIENT = Client.select_client()
 
     print_header()
-    HARDWARE = select_hardware(l)
+    HARDWARE = Hardware.select_hardware()
 
     while 1:
         print_header()
@@ -63,7 +54,7 @@ if __name__ == '__main__':
 
 
         name = f'{CLIENT.company} [{IMEI[-6:]}]'
-        phone = ICCID_to_phone(ICCID)
+        phone = a.find_by_ICCID(ICCID)
 
 
         create_object(name, IMEI, HARDWARE, phone, CLIENT.id, serial=SN)

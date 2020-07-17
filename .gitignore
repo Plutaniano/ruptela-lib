@@ -4,3 +4,4 @@ db.bak/
 *.csv
 .vscode/
 relatorio*
+.*~

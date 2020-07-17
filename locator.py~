@@ -57,7 +57,7 @@ class Locator:
         }
         global hw_req
         hw_req = self.session.get(LOCATOR_HOST + '/administrator/objects/edit', params=params)
-        soup = BeautifulSoup(hw_req.content)
+        soup = BeautifulSoup(hw_req.content, features='lxml')
         rows = soup.find('div', id='hardwarelist').find('table').find_all('tr')
         hardwares = []
         for tr in rows[1:]:
@@ -213,6 +213,18 @@ def _get_phone_id(phone):
             return tag['value']
     else:
         raise Exception('Phone not found!')
+
+
+
+
+
+def select_hardware():
+    for i, hw in enumerate(hardwares):
+        print(f'[ID:{i}] {hw}')
+    print('\n\n')
+    index = int(input('Selecione o ID do hardware a ser utilizado: '))
+    return list(hardwares.keys())[index]
+
 
 
 def check_status(http_req):
