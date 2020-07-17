@@ -85,7 +85,16 @@ class Web_User:
 
 
 class Hardware:
-    pass    
+    all = []
+
+    def __init__(self, d):
+        self.all.append(self)
+        self.id = d['id']
+        self.name = d['name']
+        self.description = d['description']
+        self.hw_version = d['hw_version']
+        self.soft_id = d['soft_id']
+        self.soft_version = d['soft_version']
         
 
 class Object:
@@ -122,7 +131,6 @@ class Object:
         packets = []
         try:
             for i in r.json()['items']:
-                print('*', end='')
                 packets.append(i)
 
             while r.json()['continuation_token'] != None:

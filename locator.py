@@ -51,8 +51,27 @@ class Locator:
             print(f'{len(client.objects)} objetos criados para o cliente {client.company}.')
 
     def create_hardwares(self):
-        # to do...
-        return None
+        params = {
+            'cmd': 'edit',
+            'nr': '626895'      # o que é 626895?
+        }
+        global hw_req
+        hw_req = self.session.get(LOCATOR_HOST + '/administrator/objects/edit', params=params)
+        soup = BeautifulSoup(hw_req.content, features='lxml')
+        rows = soup.find('div', id='hardwarelist').find('table').find_all('tr')
+        hardwares = []
+        for tr in rows[1:]:
+            tds = tr.find_all('td')
+            d = {}
+            d['id'] = tds[0].text
+            d['name'] = tds[1].text
+            d['description'] = tds[2].text
+            d['hw_version'] = tds[3].text
+            d['soft_id'] = tds[4].text.split(';')[0][4:]
+            d['soft_version'] = tds[4].text.split(';')[1][41:-2]
+            hardwares.append(Hardware(d))
+        return hardwares
+
     
     def __repr__(self):
         objs = 0
