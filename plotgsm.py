@@ -5,19 +5,21 @@ from locator import Locator
 from arqia import Arqia
 
 
-l = Locator()
 
 
 
 timefrom = float(input('time from?'))
 timeto = float(input('time to?'))
-#timefrom = (dt.datetime.utcnow() - dt.timedelta(days=x)).isoformat()[:-3] + "Z"
-#timeto = (dt.datetime.utcnow() - dt.timedelta(days=y)).isoformat()[:-3] + 'Z'
+timefromtitle = (dt.datetime.utcnow() - dt.timedelta(days=timefrom)).isoformat()[:-16]
+timetotitle = (dt.datetime.utcnow() - dt.timedelta(days=timeto)).isoformat()[:-16]
 
+l = Locator()
 packets = []
+
 for obj in l.Colorado.objects:
-    for p in obj.get_interval(timefrom, timeto):
-        packets.append(p)
+    if obj.name not in ['228254', '545053', '598540', '671578', 'Colorado Light S 22']:
+        for p in obj.get_interval(timefrom, timeto):
+            packets.append(p)
 
 lat = []
 lon = []
@@ -32,7 +34,7 @@ for p in packets:
         print('erro')
         gsm.append(0)
 plt.scatter(lon, lat, c=gsm, cmap='binary')
-plt.suptitle(f'{timefrom} até {timeto}')
+plt.suptitle(f'{timefromtitle} até {timetotitle}')
 plt.annotate('colorado', (-48.191086, -20.276510))
 plt.annotate('Ribeirão', (-47.812909, -21.165933))
 plt.annotate('guaira', (-48.311234, -20.324409))
@@ -42,4 +44,5 @@ plt.ylim(-23, -18)
 ax = plt.gca()
 ax.set_facecolor('xkcd:salmon')
 plt.colorbar()
+print('Mostrando gráfico...')
 plt.show()
