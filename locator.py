@@ -55,9 +55,8 @@ class Locator:
             'cmd': 'edit',
             'nr': '626895'      # o que é 626895?
         }
-        global hw_req
         hw_req = self.session.get(LOCATOR_HOST + '/administrator/objects/edit', params=params)
-        soup = BeautifulSoup(hw_req.content)
+        soup = BeautifulSoup(hw_req.content, 'html.parser')
         rows = soup.find('div', id='hardwarelist').find('table').find_all('tr')
         hardwares = []
         for tr in rows[1:]:
@@ -79,39 +78,27 @@ class Locator:
             objs += len(client.objects)
         return f'[Locator] {len(self.clients)} clientes, {objs}'
 
+    def _get_phone_id(self, phone):
+        phone = str(phone)
+        headers = {
+            'Connection': 'keep-alive',
+            'Accept': 'application/javascript, application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-Range': 'items=0-999',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36 OPR/68.0.3618.173',
+            'Range': 'items=0-999',
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Referer': 'http://track.ruptela.lt/administrator/connection',
+            'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+        }
+        r = self.session.get(LOCATOR_HOST + '/administrator/connection/getList', headers=headers)
+        for row in r.json():
+            if row['phone'] == phone:
+                return row['id'].strip()
+        else:
+            raise Exception('Phone not found!')
 
-
-
-def create_sim(phone, client, apn='m2m.arqia.br'):
-    params = {
-        'service_pr': 'Excel Produtos Eletronicos',
-        'service_provider': '1407',
-        'clients': str(client),         # 51879 = colorado
-        'provider': '30',
-        'phone': str(phone),
-        'numbers': '1',
-        'pin': '',
-        'puk': '',
-        'imsi': '',
-        'ip': '',
-        'apn': str(apn),
-        'login': '',
-        'password': '',
-        'create': 'Create'
-    }
-    r = s.post(HOST + '/administrator/connection/create', params)
-    soup = BeautifulSoup(r.text, 'html.parser')
-    try:
-        string = color(soup('div', 'error')[0].contents[0], 'red', 'WHITE')
-        success = False
-    except:
-        string = color('OK!', 'green', 'white')
-        success = True
-    print(f'create_SIM: {phone} * {string}')
-    return success
-
-
-def create_new_object(
+    def create_new_object(
         self,
         name,
         imei,
@@ -135,67 +122,96 @@ def create_new_object(
         installer='',
         username='',
         password='',
-):
-    try:
-        phone_id = _get_phone_id(phone)
-    except:
-        create_sim(phone, client)
-        phone_id = _get_phone_id(phone)
-    params = {
-        'client': str(client),                  # Client ID - 51879=Colorado
-        'object': str(name),                    # Object Name
-        'type': 'vehicle',                      # vehicle or trailer
-        'state': '1',                           # State: 1-'' 2-'New/not installed' 3-Testing 4-For Repair 5-Uninstalled
-        'tt_version': 'TT2',                    # TT2
-        'description': str(description),        # Obj Description
-        'connection': str(phone_id),            # Phone Number
-        'phone': str(drivers_phone),            # Drivers phone
-        'serial': str(serial),                  # Serial Number
-        'imei': str(imei),                      # IMEI
-        'hardware': str(hardware),              # Hardware - ex: 'FM-Eco4 S'
-        'hardware_id': hardwares[hardware][0],  # Hardware ID - FM Eco4 S=157
-        'soft': hardwares[hardware][1],         # Soft ID
-        'template_id': str(template_id),        # Template ID - Default 672 para EU**Standart**ECO4-S
-        'delay_hour': str(delay_hour),          # Delay hour
-        'delay_min': str(delay_min),            # Delay minutes
-        'make': str(make),                      # Make
-        'model': str(model),                    # Model
-        'object_color': str(object_color),      # Color
-        'admin_notes': str(notes),              # Notes
-        'vin': str(vin),                        # VIN
-        'vehicle_type': str(vehicle_type),      # Vehicle Type - UNSPECIFIED or PASSENGER
-        'temp_payment_plan_id': str(tppid),     # Temporary Payment Plan
-        'temp_from_date': datetime.today().strftime('%Y-%m-%d'),
-        'temp_to_date': (datetime.today() + timedelta(days=30)).strftime('%Y-%m-%d'),
-        'payment_plan_id': str(ppid),           # Payment Plan ID - default 'Demo'=2911
-        'enforce_disable_payment_plan': '0',    # Enforce disable payment plant
-        'preselected_payment_plan': '',         # Preselected payment plan
-        'installer': str(installer),            # Installer
-        'install_date': '',                     # Install date
-        'uninstall_date': '',                   # Uninstall date
-        'visible': '0',                         # Visible
-        'include_web_service': '1',             # Include in web service
-        'trailer_id': '',                       # Trailer ID
-        'monitor_enabled': '0',                 # Monitor enabled
-        'mask': '',                             # Mask
-        'extra_mask': '',                       # Extra mask
-        'pnd_type': '0',                        # PND Type
-        'username': str(username),              # FM Login
-        'password': str(password),              # FM Password
-        'create': 'Create',                     # Create
-    }
-    r = s.post(HOST + '/administrator/objects/create', params)
-    check_status(r)
-    soup = BeautifulSoup(r.text, 'html.parser')
-    try:
-        string = color(soup('div', 'error')[0].contents, 'red', 'WHITE')
-        success = False
-    except:
-        string = color(soup('span', {'class': 'done'})[0].text, 'green', 'white')
-        success = True
-    print(f'[*] Criação do objeto: {name}')
-    print(f'--- status {string}')
-    return success
+        ):
+        try:
+            phone_id = self._get_phone_id(phone, client)
+        except:
+            self.create_sim(phone, client)
+            phone_id = self._get_phone_id(phone)
+        params = {
+            'client': str(client.id),                  # Client ID - 51879=Colorado
+            'object': str(name),                    # Object Name
+            'type': 'vehicle',                      # vehicle or trailer
+            'state': '1',                           # State: 1-'' 2-'New/not installed' 3-Testing 4-For Repair 5-Uninstalled
+            'tt_version': 'TT2',                    # TT2
+            'description': str(description),        # Obj Description
+            'connection': str(phone_id),            # Phone Number
+            'phone': str(drivers_phone),            # Drivers phone
+            'serial': str(serial),                  # Serial Number
+            'imei': str(imei),                      # IMEI
+            'hardware': str(hardware),              # Hardware - ex: 'FM-Eco4 S'
+            'hardware_id': hardware.id,             # Hardware ID - FM Eco4 S=157
+            'soft': hardware.soft_id,               # Soft ID
+            'template_id': str(template_id),        # Template ID - Default 672 para EU**Standart**ECO4-S
+            'delay_hour': str(delay_hour),          # Delay hour
+            'delay_min': str(delay_min),            # Delay minutes
+            'make': str(make),                      # Make
+            'model': str(model),                    # Model
+            'object_color': str(object_color),      # Color
+            'admin_notes': str(notes),              # Notes
+            'vin': str(vin),                        # VIN
+            'vehicle_type': str(vehicle_type),      # Vehicle Type - UNSPECIFIED or PASSENGER
+            'temp_payment_plan_id': str(tppid),     # Temporary Payment Plan
+            'temp_from_date': datetime.today().strftime('%Y-%m-%d'),
+            'temp_to_date': (datetime.today() + timedelta(days=30)).strftime('%Y-%m-%d'),
+            'payment_plan_id': str(ppid),           # Payment Plan ID - default 'Demo'=2911
+            'enforce_disable_payment_plan': '0',    # Enforce disable payment plant
+            'preselected_payment_plan': '',         # Preselected payment plan
+            'installer': str(installer),            # Installer
+            'install_date': '',                     # Install date
+            'uninstall_date': '',                   # Uninstall date
+            'visible': '0',                         # Visible
+            'include_web_service': '1',             # Include in web service
+            'trailer_id': '',                       # Trailer ID
+            'monitor_enabled': '0',                 # Monitor enabled
+            'mask': '',                             # Mask
+            'extra_mask': '',                       # Extra mask
+            'pnd_type': '0',                        # PND Type
+            'username': str(username),              # FM Login
+            'password': str(password),              # FM Password
+            'create': 'Create',                     # Create
+        }
+        r = self.session.post(LOCATOR_HOST + '/administrator/objects/create', params)
+        soup = BeautifulSoup(r.text, 'html.parser')
+        try:
+            string = color(soup('div', 'error')[0].contents, 'red', 'WHITE')
+            success = False
+        except:
+            string = color(soup('span', {'class': 'done'})[0].text, 'green', 'white')
+            success = True
+        print(f'[*] Criação do objeto: {name}')
+        print(f'--- status: {string}')
+        return success
+
+
+    def create_sim(self, phone, client, apn='m2m.arqia.br'):
+        params = {
+            'service_pr': 'Excel Produtos Eletronicos',
+            'service_provider': '1407',
+            'clients': str(client.id),
+            'provider': '30',
+            'phone': str(phone),
+            'numbers': '1',
+            'pin': '',
+            'puk': '',
+            'imsi': '',
+            'ip': '',
+            'apn': str(apn),
+            'login': '',
+            'password': '',
+            'create': 'Create'
+        }
+        global r
+        r = self.session.post(LOCATOR_HOST + '/administrator/connection/create', params)
+        soup = BeautifulSoup(r.text, 'html.parser')
+        try:
+            string = color(soup('div', 'error')[0].contents[0], 'red', 'WHITE')
+            success = False
+        except:
+            string = color('OK!', 'green', 'white')
+            success = True
+        print(f'create_SIM: {phone} * {string}')
+        return success
 
 
 def color(msg, bg='RED', fg='WHITE'):
@@ -203,16 +219,6 @@ def color(msg, bg='RED', fg='WHITE'):
     fg = eval(f'colored.fore.{fg.upper()}')
     return f'{bg}{fg}{colored.style.BOLD}{msg}{colored.style.RESET}'
 
-
-def _get_phone_id(phone):
-    phone = str(phone)
-    r = s.get(HOST + '/administrator/objects/edit', params={'cmd': 'edit', 'nr': '558737'})
-    soup = BeautifulSoup(r.text, 'html.parser')
-    for tag in soup.find(id='oconnection').find_all('option'):
-        if tag.text == phone:
-            return tag['value']
-    else:
-        raise Exception('Phone not found!')
 
 
 def check_status(http_req):

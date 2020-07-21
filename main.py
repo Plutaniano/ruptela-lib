@@ -57,7 +57,7 @@ if __name__ == '__main__':
         phone = a.find_by_ICCID(ICCID)
 
 
-        create_object(name, IMEI, HARDWARE, phone, CLIENT.id, serial=SN)
+        l.create_new_object(name, IMEI, HARDWARE, phone.phone, CLIENT, serial=SN)
         print('\n\n')
 
         print('Pressione x para sair ou qualquer outra tecla para repetir: ')
