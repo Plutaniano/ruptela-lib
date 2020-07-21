@@ -146,7 +146,7 @@ class Object:
         }
 
         r = requests.get(HOST + f'/objects/{self.id}/coordinates', params=params)
-        print(f'[{self.name}] Requisitando pacotes...', end="")
+        print(f'[{self.name}] Requisitando pacotes... ', end="")
         packets = []
         try:
             for i in r.json()['items']:
@@ -157,7 +157,7 @@ class Object:
                 r = requests.get(HOST + f'/objects/{self.id}/coordinates', params=params)
                 print('*', end='')
                 for i in r.json()['items']:
-                    packets.append(i)
+                    packets.append(Packet(i))
         except:
             print(r.json())
         print(f'\n{len(packets)} pacotes.')

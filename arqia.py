@@ -16,6 +16,7 @@ ARQIA_iS = 'ODMyNQ=='
 
 class Arqia:
     all = []
+    
     def __init__(self):
         self.all.append(self)
         self.set_options()

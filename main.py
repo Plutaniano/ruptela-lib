@@ -54,10 +54,10 @@ if __name__ == '__main__':
 
 
         name = f'{CLIENT.company} [{IMEI[-6:]}]'
-        phone = a.find_by_ICCID(ICCID)
+        sim_card = a.find_by_ICCID(ICCID)
 
 
-        l.create_new_object(name, IMEI, HARDWARE, phone.phone, CLIENT, serial=SN)
+        l.create_new_object(name, IMEI, HARDWARE, sim_card.phone, CLIENT, serial=SN)
         print('\n\n')
 
         print('Pressione x para sair ou qualquer outra tecla para repetir: ')
