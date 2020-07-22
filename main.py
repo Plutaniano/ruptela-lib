@@ -53,7 +53,7 @@ if __name__ == '__main__':
         SN = input('Escaneie o Serial Number do dispositivo: ')
 
 
-        name = f'{CLIENT.company} [{IMEI[-6:]}]'
+        name = f'{CLIENT.company} [{SN}]'
         sim_card = a.find_by_ICCID(ICCID)
 
 

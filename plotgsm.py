@@ -5,9 +5,9 @@ from locator import Locator
 from arqia import Arqia
 
 
+carros = ['228254']
 
-
-
+print(f'Lista de carros: {", ".join(carros)}')
 timefrom = float(input('time from?'))
 timeto = float(input('time to?'))
 timefromtitle = (dt.datetime.utcnow() - dt.timedelta(days=timefrom)).isoformat()[:-16]
@@ -17,7 +17,7 @@ l = Locator()
 packets = []
 
 for obj in l.Colorado.objects:
-    if obj.name not in ['228254', '545053', '598540', '671578', 'Colorado Light S 22']:
+    if obj.name in carros:
         for p in obj.get_interval(timefrom, timeto):
             packets.append(p)
 
@@ -26,13 +26,14 @@ lon = []
 gsm = []
 
 for p in packets:
-    lat.append(p["position"]["latitude"])
-    lon.append(p["position"]["longitude"])
+    lon.append(p.position["longitude"])
+    lat.append(p.position["latitude"])
     try:
-        gsm.append(min(p["inputs"]["device_inputs"]["gsm_signal_strength"], 31))
+        gsm.append(min(p.gsm_signal_strength, 31))
     except:
         print('erro')
         gsm.append(0)
+
 plt.scatter(lon, lat, c=gsm, cmap='binary')
 plt.suptitle(f'{timefromtitle} até {timetotitle}')
 plt.annotate('colorado', (-48.191086, -20.276510))
@@ -46,3 +47,13 @@ ax.set_facecolor('xkcd:salmon')
 plt.colorbar()
 print('Mostrando gráfico...')
 plt.show()
+
+
+def setaxis(xmin, xmax, ymin, ymax):
+    if xmax - xmin > ymax - ymin:
+        axisrange = xmax-xmin
+        midpoint_x = (xmax - xmin)/2
+        midpoint_y = (ymax - ymin)/2
+        
+
+

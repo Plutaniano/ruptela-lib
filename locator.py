@@ -18,6 +18,7 @@ class Locator:
             self.clients = self.create_clients()
             self.hardwares = self.create_hardwares()
 
+
     def login(self):
         self.session = requests.Session()
         login_req = self.session.post(LOCATOR_HOST + '/administrator/authentication/login', {'sl': LOCATOR_LOGIN, 'ps': LOCATOR_PASS })
@@ -28,6 +29,7 @@ class Locator:
             self.logged_in = True
             print('Login OK!')
     
+
     def create_clients(self):
         headers = {'X-Requested-With': 'XMLHttpRequest'}
         clients_req = self.session.get(LOCATOR_HOST + '/administrator/clients/getList', headers=headers)
@@ -49,6 +51,7 @@ class Locator:
                 obj = Object(obj)
                 client.objects.append(obj)
             print(f'{len(client.objects)} objetos criados para o cliente {client.company}.')
+
 
     def create_hardwares(self):
         params = {
