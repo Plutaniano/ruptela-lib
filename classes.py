@@ -80,6 +80,7 @@ class Web_User:
             self.api_key = self.get_api_key(locator)
         except:
             pass
+
     def get_api_key(self, locator):
         api_key_req = locator.session.get(self.link)
         token = api_key_req.history[0].headers['Location']
@@ -125,8 +126,8 @@ class Object:
         self.imei = d["imei"]
         self.all.append(self)
 
-    def get_by_name(name):
-        for i in Object.all:
+    def get_by_name(self, name):
+        for i in self.all:
             if i.name == name:
                 return i
         raise Exception('Object not found.')
@@ -150,7 +151,7 @@ class Object:
         packets = []
         try:
             for i in r.json()['items']:
-                packets.append(i)
+                packets.append(Packet(i))
 
             while r.json()['continuation_token'] != None:
                 params['continuation_token'] = r.json()['continuation_token']
@@ -174,7 +175,7 @@ class Packet:
         try:
             self.gsm_signal_strength = d['inputs']['device_inputs']['gsm_signal_strength']
         except:
-            self.gsm_signal_strength = 0
+            self.gsm_signal_strength = None
         self.virtual_odometer = d['inputs']['device_inputs']['virtual_odometer']
 
     def __repr__(self):
