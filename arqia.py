@@ -72,6 +72,7 @@ class Arqia:
         for sim in self.simcards:
             if sim.ICCID == ICCID:
                 return sim
+        raise Exception('ICCID não corresponde à um numero.')
 
     def __repr__(self):
         return f'[Arqia] {len(self.simcards)} sim cards.'
@@ -107,10 +108,11 @@ class Sim_Card:
         phone = self.phone[4:]
         return f'[SIM] +{intl_code} ({area_code}) {phone[:5]}-{phone[5:]}'
 
+
 def exit_handler():
     for i in Arqia.all:
         i.driver.quit()
-
+atexit.register(exit_handler)
 
 
 

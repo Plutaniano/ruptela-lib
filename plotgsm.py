@@ -33,6 +33,7 @@ for p in packets:
     except:
         print('erro')
         gsm.append(0)
+        
 plt.scatter(lon, lat, c=gsm, cmap='binary')
 plt.suptitle(f'{timefromtitle} até {timetotitle}')
 plt.annotate('colorado', (-48.191086, -20.276510))

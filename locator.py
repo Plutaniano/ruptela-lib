@@ -78,6 +78,7 @@ class Locator:
             objs += len(client.objects)
         return f'[Locator] {len(self.clients)} clientes, {objs} objetos'
 
+
     def _get_phone_id(self, phone):
         phone = str(phone)
         headers = {
@@ -219,30 +220,6 @@ def color(msg, bg='RED', fg='WHITE'):
     fg = eval(f'colored.fore.{fg.upper()}')
     return f'{bg}{fg}{colored.style.BOLD}{msg}{colored.style.RESET}'
 
-
-
-def check_status(http_req):
-    if http_req.status_code != 200:
-        print(f'URL: {http_req.url}')
-        print(f'Status Code: {http_req.status_code}')
-        print(f'Erro no pedido HTTP, objeto response na variavel req_debug')
-        global req_debug
-        req_debug = http_req
-        raise Exception('HTTP request error')
-    else:
-        return True
-
-
-hardwares = {
-    # Nome:             (hardware_id, soft_id)
-    'FM-Eco4':          (137, 308),
-    'FM-Eco4 light':    (138, 315),
-    'FM-Eco4 S':        (157, 356),
-    'FM-Pro4':          (135, 306),
-    'FM-Tco4':          (136, 307),
-    'FM-Tco4-LCV':      (140, 321),
-    'Plug4':            (139, 317)
-}
 
 if __name__ == '__main__':
     l = Locator()

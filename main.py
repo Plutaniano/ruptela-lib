@@ -2,8 +2,9 @@ import sys
 import time
 import os
 import arqia
+import atexit
 from classes import Client, Web_User, Hardware, Packet, Object
-from locator import Locator
+from locator import *
 from arqia import Arqia
 
 def print_header():
@@ -16,7 +17,7 @@ def print_header():
     print(' #+#       #+#    #+##+#    #+##+#       #+#       #+#    #+##+#    #+#    ') 
     print('#############    ### ######## ############################# ###    ###     ')
     try:
-        print(f'Hardware: {HARDWARE}    Cliente: {CLIENT.company}')
+        print(f'Hardware: {HARDWARE.name}    Cliente: {CLIENT.company}')
     except:
         pass
     print('\n\n\n')
@@ -43,24 +44,53 @@ if __name__ == '__main__':
     HARDWARE = Hardware.select_hardware()
 
     while 1:
-        print_header()
-        ICCID = input('Escaneie o código de barras do SIM card: ')
+
+        ICCID = ''
+        IMEI = ''
+        SN = ''
+        name = ''
+        erro = ''
+
+        while bool(ICCID and IMEI and SN) == False:
+            print_header()
+
+            print(f'{"ICCID:".rjust(16, " ")} {ICCID}')
+            print(f'{"IMEI:".rjust(16, " ")} {IMEI}')
+            print(f'Numero de Serie: {SN}')
+            print(f'\n{color(erro)}')
+            erro = ''
+            reading = input('\n Esperando leitura do codigo de barras: ')
+
+            try:
+                int(reading)
+            except ValueError:
+                erro = 'valor nao-numerico inserido'
+            finally:
+                if len(reading) == 20:
+                    ICCID = reading
+
+                elif len(reading) == 9:
+                    SN = reading
+                    name = f'{CLIENT.company} [{SN}]'
+                
+                elif len(reading) == 16:
+                    IMEI = reading
+                
+                else:
+                    erro = 'numero invalido'
 
         print_header()
-        IMEI = input('Escaneie o IMEI do dispositivo: ')
+        print(f'{"ICCID:".rjust(16, " ")} {ICCID}')
+        print(f'{"IMEI:".rjust(16, " ")} {IMEI}')
+        print(f'Numero de Serie: {SN}')
 
-        print_header()
-        SN = input('Escaneie o Serial Number do dispositivo: ')
-
-
-        name = f'{CLIENT.company} [{IMEI[-6:]}]'
-        sim_card = a.find_by_ICCID(ICCID)
-
-
-        l.create_new_object(name, IMEI, HARDWARE, sim_card.phone, CLIENT, serial=SN)
-        print('\n\n')
+        if input('\nDigite \'s\' para criar objeto: ') in ['s', 'S']:
+            sim_card = a.find_by_ICCID(ICCID)
+            l.create_new_object(name, IMEI, HARDWARE, sim_card.phone, CLIENT, serial=SN)
+            print('\n\n')
 
         print('Pressione x para sair ou qualquer outra tecla para repetir: ')
         if input() in ['x', 'X']:
             quit()
+
 
