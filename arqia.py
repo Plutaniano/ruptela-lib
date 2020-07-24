@@ -2,6 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 import time
+import csv
 import requests
 from bs4 import BeautifulSoup
 from zipfile import ZipFile
@@ -12,18 +13,17 @@ import atexit
 ARQIA_HOST = 'http://arqia.saitro.com'
 ARQIA_LOGIN = 'estenio.benatti@excelbr.com.br'
 ARQIA_PASS = 'd79d4'
-ARQIA_iS = 'ODMyNQ=='
 
 class Arqia:
     all = []
     
-    def __init__(self):
+    def __init__(self):     # inicializa o objeto Arqia com alguns atributos
         self.all.append(self)
         self.set_options()
         self.login()
         self.get_simcards()
 
-    def login(self):
+    def login(self):    # abre o browser e faz login no site da Arqia
         self.driver = webdriver.Chrome(options=self.options)
         self.driver.get(ARQIA_HOST)
         self.driver.find_element_by_id('login').send_keys(ARQIA_LOGIN)
@@ -31,36 +31,51 @@ class Arqia:
         form.send_keys(ARQIA_PASS)
         form.send_keys(Keys.RETURN)
         time.sleep(2)
-        print(self.driver.find_element_by_tag_name('h1').text)
+        print(self.driver.find_element_by_tag_name('h1').text)  # retorna a mensagem de bem-vindo
         
     
     def get_simcards(self):
-        self.driver.get(ARQIA_HOST + '/relatorios/')
-        button = self.driver.find_element_by_css_selector('table tbody tr td div input')
+        # limpa os relatórios existentes na pasta
         files = os.listdir('.')
         for file in files:
             if 'relatorio' in file:
                 os.remove(file)
-        files = os.listdir('.')
 
+        # cria lista de arquivos antes de baixar relatório
+        before_files = os.listdir('.')
 
+        # baixa relatório de sim cards  atualizado
+        self.driver.get(ARQIA_HOST + '/relatorios/')
+        button = self.driver.find_element_by_css_selector('table tbody tr td div input')
         button.click()
         time.sleep(1)
 
+        # compara a lista de arquivos antes de baixar o relatório com
+        # a lista de arquivos após o download, sai do loop com o arquivo novo em 'file'
         for file in os.listdir('.'):
-            if file not in files:
+            if file not in before_files:
                 break
         
+        # extrai o .csv do .zip, lê cada linha do arquivo .csv e cria os objetos Sim_Card
         filename = file
         with ZipFile(filename) as f:
             f.extractall()
-        with open(filename[:-4] + '.csv', 'r') as csv:
+        with open(filename[:-4] + '.csv', 'r') as f:
+            csv_reader = csv.DictReader(f, delimiter=';')
             simcards = []
-            for line in csv.readlines()[1:]:
-                simcards.append(Sim_Card(line))
+            for row in csv_reader:
+                simcards.append(Sim_Card(row))
+
+        # limpa os arquivos baixados/utilizados
+        files = os.listdir('.')
+        for file in files:
+            if 'relatorio' in file:
+                os.remove(file)
+
+        # salva a lista de Sim_Cards no atributo simcards
         self.simcards = simcards
 
-    def set_options(self):
+    def set_options(self):      #define algumas opções para o browser "virtual"
         options = Options()
         options.headless = True
         prefs = {"download.default_directory" : f"{os.getcwd()}"}
@@ -68,7 +83,7 @@ class Arqia:
         options.add_experimental_option("prefs",prefs)
         self.options = options
 
-    def find_by_ICCID(self, ICCID):
+    def find_by_ICCID(self, ICCID):     # retorna o objeto Sim_Card correspondente ao ICCID inputado
         for sim in self.simcards:
             if sim.ICCID == ICCID:
                 return sim
@@ -78,26 +93,26 @@ class Arqia:
         return f'[Arqia] {len(self.simcards)} sim cards.'
 
 class Sim_Card:
-    def __init__(self, line):
-        line = line.split(';')
-        self.name = line[0]
-        self.cpf = line[1]
-        self.ICCID = line[2]
-        self.phone = line[3]
-        self.IMSI = line[4]
-        self.info = line[5]
-        self.activation = (line[6], line[7])
-        self.lastaccess = line[8]
-        self.operator = line[9]
-        self.plan = line[10]
-        if line[11] == 'Ativo':
+    def __init__(self, row):
+        self.name = row['Nome Fantasia']
+        self.cpf = row['CPF/CNPJ']
+        self.ICCID = row['ICCID']
+        self.phone = row['MSISDN']
+        self.IMSI = row['IMSI']
+        self.info = row['Info']
+        self.activation = (row['Data Ativação'], row['Hora Ativação'])
+        self.lastaccess = row['Data de Último Acesso']
+        self.operator = row['Operadora']
+        self.plan = row['Plano']
+        self.LBS = row['LBS']
+        if row['Status'] == 'Ativo':
             self.status = True
-            self.reason = ''
+            self.reason = row['Bloqueio/Suspensão']
         else:
             self.status = False
-            self.reason = line[14]
+            self.reason = row['Bloqueio/Suspensão']
         
-        if line[12] == 'Online':
+        if row['Conexão'] == 'Online':
             self.is_online = True
         else:
             self.is_online = False
@@ -109,11 +124,11 @@ class Sim_Card:
         return f'[SIM] +{intl_code} ({area_code}) {phone[:5]}-{phone[5:]}'
 
 
-def exit_handler():
+def exit_handler():     
+    # fecha os browsers abertos quando o programa é encerrado
     for i in Arqia.all:
         i.driver.quit()
 atexit.register(exit_handler)
-
 
 
 if __name__ == '__main__':

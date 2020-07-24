@@ -205,7 +205,7 @@ class Locator:
             'password': '',
             'create': 'Create'
         }
-        global r
+        
         r = self.session.post(LOCATOR_HOST + '/administrator/connection/create', params)
         soup = BeautifulSoup(r.text, 'html.parser')
         try:

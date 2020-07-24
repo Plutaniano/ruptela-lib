@@ -2,8 +2,7 @@ import time
 import requests
 import datetime as dt
 
-KEY = 'Al-xrBlaeH-JXIj0RuPQT6FwuPFrZZGd'
-HOST = 'https://api.fm-track.com'
+API_HOST = 'https://api.fm-track.com'
 LOCATOR_HOST = 'http://track.ruptela.lt'
 
 class Client:
@@ -33,7 +32,7 @@ class Client:
         web_users = []
         for user in web_req.json():
             if user['company'] == self.company:
-                web_user = Web_User(user, locator)
+                web_user = Web_User(user, locator, self)
                 setattr(self, web_user.login, web_user)
                 web_users.append(web_user)
         return web_users
@@ -46,7 +45,7 @@ class Client:
         objs_req = requests.get("http://api.fm-track.com/objects", params=params)
         objs = []
         for obj in objs_req.json():
-            objs.append(Object(obj))
+            objs.append(Object(obj, self))
         return objs
 
     @classmethod
@@ -59,13 +58,12 @@ class Client:
 
 
 
-
-
 class Web_User:
     all = []
 
-    def __init__(self, d, locator):
+    def __init__(self, d, locator, owner: Client):
         self.all.append(self)
+        self.client = owner
         self.id = int(d['id_u'])
         self.company = d['company']
         self.username = d['username']
@@ -93,6 +91,7 @@ class Web_User:
         return f'[web id:{self.id}] {self.username}'
 
 
+
 class Hardware:
     all = []
 
@@ -117,10 +116,12 @@ class Hardware:
         return f'[HW] {self.name}'
         
 
+
 class Object:
     all = []
 
-    def __init__(self, d):
+    def __init__(self, d, owner: Client):
+        self.client = owner
         self.id = d["id"]
         self.name = d["name"]
         self.imei = d["imei"]
@@ -132,41 +133,42 @@ class Object:
                 return i
         raise Exception('Object not found.')
 
-    def __repr__(self):
-        return f'[Obj][{self.name}]'
-
-    def get_interval(self, time_from, time_to=0, *args):
+    def get_interval(self, time_from, time_to=0):
         time_from = (dt.datetime.utcnow() - dt.timedelta(days=time_from)).isoformat()[:-3] + 'Z'
         time_to = (dt.datetime.utcnow() - dt.timedelta(days=time_to)).isoformat()[:-3] + 'Z'
         params = {
             'version': 2,
-            'api_key': KEY,
+            'api_key': self.client.web_users[0].api_key,
             'from_datetime': time_from,
             'to_datetime': time_to,
-            'limit': 1000
+            'limit': 1000           # maximo é 1000
         }
 
-        r = requests.get(HOST + f'/objects/{self.id}/coordinates', params=params)
+        r = requests.get(API_HOST + f'/objects/{self.id}/coordinates', params=params)
         print(f'[{self.name}] Requisitando pacotes... ', end="")
         packets = []
         try:
             for i in r.json()['items']:
-                packets.append(Packet(i))
+                packets.append(Packet(i, self))
 
             while r.json()['continuation_token'] != None:
                 params['continuation_token'] = r.json()['continuation_token']
-                r = requests.get(HOST + f'/objects/{self.id}/coordinates', params=params)
+                r = requests.get(API_HOST + f'/objects/{self.id}/coordinates', params=params)
                 print('*', end='')
                 for i in r.json()['items']:
-                    packets.append(Packet(i))
+                    packets.append(Packet(i, self))
         except:
             print(r.json())
         print(f'\n{len(packets)} pacotes.')
         return packets
 
+    def __repr__(self):
+        return f'[Obj][{self.name}]'
+
 
 class Packet:
-    def __init__(self, d):
+    def __init__(self, d, owner: Object):
+        self.object = owner
         self.object_id = d['object_id']
         self.datetime = time_convert(d['datetime'])
         self.ignition_status = d['ignition_status']
@@ -179,10 +181,10 @@ class Packet:
         self.virtual_odometer = d['inputs']['device_inputs']['virtual_odometer']
 
     def __repr__(self):
-        return f'[...{self.object_id[-3:]}][{self.datetime.isoformat()}] [{self.gsm_signal_strength}]'
+        return f'[{self.object.name}][{self.datetime.isoformat()}] [gsm:{self.gsm_signal_strength}]'
 
 
-# mudar para classe herdade de datetime
+# to do: mudar para classe herdade de datetime
 def time_convert(time):
     if isinstance(time, str):
         return dt.datetime.strptime(time, '%Y-%m-%dT%H:%M:%S.%fZ')
@@ -191,4 +193,5 @@ def time_convert(time):
 
 
 if __name__ == '__main__':
-    Client.get_clients()
+    from locator import Locator
+    l = Locator()

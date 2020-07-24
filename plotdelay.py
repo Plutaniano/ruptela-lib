@@ -7,7 +7,7 @@ create_all_objects()
 timefrom = float(input('time from? '))
 
 for i in Object.all:
-    i.packets = [Packet(p) for p in i.get_interval(timefrom)]
+    i.packets = [Packet(p, i) for p in i.get_interval(timefrom)]
     print(f'[{i.name}] {len(i.packets)} pacotes')
     i.dates = []
     i.delays = []
