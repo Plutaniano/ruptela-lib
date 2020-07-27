@@ -58,6 +58,7 @@ def plot_gsm(objs, timefrom, timeto=0):
     else:
         midpoint = sum(scatter_ax.get_xlim())/2
         scatter_ax.set_xlim(midpoint - yspan/2, midpoint + yspan/2)
+
     scatter_ax.set_facecolor('xkcd:salmon')
     plt.tight_layout()
     plt.show()  

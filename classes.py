@@ -20,6 +20,8 @@ class Client:
         self.objects = []
 
         self.web_users = self.create_web_users(locator)
+        # pega a api_key do primeiro webuser
+        # mudar para uma lista ou dict no futuro?
         self.api_key = self.web_users[0].api_key
         self.objects = self.create_objects()
 

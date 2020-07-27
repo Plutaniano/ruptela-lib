@@ -1,0 +1,6 @@
+bs4 == 0.0.1
+colored == 1.4.2
+matplotlib == 3.3.0
+numpy == 1.19.1
+requests == 2.24.0
+selenium == 3.141.0

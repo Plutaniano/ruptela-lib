@@ -33,7 +33,6 @@ class Arqia:
         time.sleep(2)
         print(self.driver.find_element_by_tag_name('h1').text)  # retorna a mensagem de bem-vindo
         
-    
     def get_simcards(self):
         # limpa os relatórios existentes na pasta
         files = os.listdir('.')
@@ -87,7 +86,16 @@ class Arqia:
         for sim in self.simcards:
             if sim.ICCID == ICCID:
                 return sim
-        raise Exception('ICCID não corresponde à um numero.')
+        raise Exception('ICCID não corresponde a um numero.')
+
+    # def download_file(self, url):
+    #     local_filename = url.split('/')[-1]
+    #     with self.session.get(url, stream=True) as r:
+    #         r.raise_for_status()
+    #         with open(local_filename, 'wb') as f:
+    #             for chunk in r.iter_content(chunk_size=8192):
+    #                 f.write(chunk)
+    #     return local_filename
 
     def __repr__(self):
         return f'[Arqia] {len(self.simcards)} sim cards.'
@@ -122,6 +130,7 @@ class Sim_Card:
         area_code = self.phone[2:4]
         phone = self.phone[4:]
         return f'[SIM] +{intl_code} ({area_code}) {phone[:5]}-{phone[5:]}'
+
 
 
 def exit_handler():     
