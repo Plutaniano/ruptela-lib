@@ -35,7 +35,7 @@ class Locator:
         clients_req = self.session.get(LOCATOR_HOST + '/administrator/clients/getList', headers=headers)
         for client in clients_req.json():
             client = Client(client, self)
-            setattr(self, client.company, client)
+            setattr(self, client.company.replace(' ', '_'), client)
         print(f'{len(Client.all)} clientes criados.')
         return Client.all         
 

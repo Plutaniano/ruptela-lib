@@ -1,10 +1,13 @@
 import datetime as dt
+import requests
 from math import ceil, sqrt
 import matplotlib.pyplot as plt
 from locator import Locator
 from arqia import Arqia
 from classes import Object
 from collections import Counter
+
+MAPQUEST_API_KEY = 'Vo9PUqFKfgB7VmmRf1gYjAvMS8Ii0KPw'
 
 # timefromtitle = (dt.datetime.utcnow() - dt.timedelta(days=timefrom)).isoformat()[:-16]
 # timetotitle = (dt.datetime.utcnow() - dt.timedelta(days=timeto)).isoformat()[:-16]
@@ -20,8 +23,7 @@ from collections import Counter
 # ax = plt.gca()
 # ax.set_facecolor('xkcd:salmon')
 # plt.colorbar()
-# print('Mostrando gráfico...')
-# plt.show()
+
 
 def plot_gsm(objs, timefrom, timeto=0):
     fig = plt.figure()
@@ -48,7 +50,7 @@ def plot_gsm(objs, timefrom, timeto=0):
     bar_ax.bar(c.keys(), c.values())
 
     scatter_ax = plt.subplot2grid((9,9), (0,0), colspan=9, rowspan=8)
-    scatter_ax.scatter(lon, lat, c=gsm, cmap='binary', label=obj.name)
+    scatter_ax.scatter(lon, lat, c=gsm, cmap='cool', label=obj.name)
 
     xspan = scatter_ax.get_xlim()[1] - scatter_ax.get_xlim()[0]
     yspan = scatter_ax.get_ylim()[1] - scatter_ax.get_ylim()[0]
@@ -59,10 +61,26 @@ def plot_gsm(objs, timefrom, timeto=0):
         midpoint = sum(scatter_ax.get_xlim())/2
         scatter_ax.set_xlim(midpoint - yspan/2, midpoint + yspan/2)
 
-    scatter_ax.set_facecolor('xkcd:salmon')
-    plt.tight_layout()
-    plt.show()  
+    map_im = get_map(scatter_ax.get_xlim(), scatter_ax.get_ylim())
+    map_im = plt.imread('map.png')
+    scatter_ax.imshow(map_im, interpolation='nearest')
 
+    plt.tight_layout()
+    plt.show()
+
+def get_map(xlim, ylim, size='1920,1080'):
+
+    params={
+        'key': MAPQUEST_API_KEY,
+        'size': size,
+        'type': 'map',
+        'bestfit': f'{xlim[0]},{ylim[0]},{xlim[1]},{ylim[1]}',
+        'imagetype': 'png'
+    }
+    global map_req
+    map_req = requests.get('http://www.mapquestapi.com/staticmap/v4/getmap', params=params)
+    with open('map.png','wb') as f:
+        f.write(map_req.content)
 
 if __name__ == '__main__':
     l = Locator()
