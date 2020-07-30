@@ -25,7 +25,7 @@ MAPQUEST_API_KEY = 'Vo9PUqFKfgB7VmmRf1gYjAvMS8Ii0KPw'
 # plt.colorbar()
 
 
-def plot_gsm(objs, timefrom, timeto=0):
+def plot_gsm(objs, timefrom, timeto=0, s=None):
     fig = plt.figure()
 
     if isinstance(objs, (str, Object)):
@@ -50,7 +50,7 @@ def plot_gsm(objs, timefrom, timeto=0):
     bar_ax.bar(c.keys(), c.values())
 
     scatter_ax = plt.subplot2grid((9,9), (0,0), colspan=9, rowspan=8)
-    scatter_ax.scatter(lon, lat, c=gsm, cmap='cool', label=obj.name)
+    scatter_ax.scatter(lon, lat, c=gsm, s=s, cmap='binary', label=obj.name)
 
     xspan = scatter_ax.get_xlim()[1] - scatter_ax.get_xlim()[0]
     yspan = scatter_ax.get_ylim()[1] - scatter_ax.get_ylim()[0]
@@ -63,8 +63,11 @@ def plot_gsm(objs, timefrom, timeto=0):
 
     map_im = get_map(scatter_ax.get_xlim(), scatter_ax.get_ylim())
     map_im = plt.imread('map.png')
-    scatter_ax.imshow(map_im, interpolation='nearest')
-
+    print(f'xlim: {scatter_ax.get_xlim()}, ylim: {scatter_ax.get_ylim()}')
+    input('?')
+    img = plt.imread('map.png')
+    ext = [scatter_ax.get_xlim()[0],scatter_ax.get_xlim()[1],scatter_ax.get_ylim()[0],scatter_ax.get_ylim()[1]]
+    scatter_ax.imshow(img, extent=ext)
     plt.tight_layout()
     plt.show()
 
