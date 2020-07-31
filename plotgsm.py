@@ -26,8 +26,6 @@ MAPQUEST_API_KEY = 'Vo9PUqFKfgB7VmmRf1gYjAvMS8Ii0KPw'
 
 
 def plot_gsm(objs, timefrom, timeto=0, s=None):
-    fig = plt.figure()
-
     if isinstance(objs, (str, Object)):
         objs = [objs]
     
@@ -61,29 +59,28 @@ def plot_gsm(objs, timefrom, timeto=0, s=None):
         midpoint = sum(scatter_ax.get_xlim())/2
         scatter_ax.set_xlim(midpoint - yspan/2, midpoint + yspan/2)
 
-    map_im = get_map(scatter_ax.get_xlim(), scatter_ax.get_ylim())
+    _ = get_map(scatter_ax.get_xlim(), scatter_ax.get_ylim())
     map_im = plt.imread('map.png')
-    print(f'xlim: {scatter_ax.get_xlim()}, ylim: {scatter_ax.get_ylim()}')
-    input('?')
-    img = plt.imread('map.png')
     ext = [scatter_ax.get_xlim()[0],scatter_ax.get_xlim()[1],scatter_ax.get_ylim()[0],scatter_ax.get_ylim()[1]]
-    scatter_ax.imshow(img, extent=ext)
+    print(ext)
+    scatter_ax.imshow(map_im, extent=ext)
     plt.tight_layout()
     plt.show()
 
-def get_map(xlim, ylim, size='1920,1080'):
+def get_map(xlim, ylim, size='1000'):
 
     params={
         'key': MAPQUEST_API_KEY,
-        'size': size,
+        'size': f'{size},{size}',
         'type': 'map',
-        'bestfit': f'{xlim[0]},{ylim[0]},{xlim[1]},{ylim[1]}',
-        'imagetype': 'png'
+        'imagetype': 'png',
+        'bestfit': f'{ylim[0]},{xlim[1]},{ylim[1]},{xlim[0]}'
     }
     global map_req
     map_req = requests.get('http://www.mapquestapi.com/staticmap/v4/getmap', params=params)
     with open('map.png','wb') as f:
         f.write(map_req.content)
+    return map_req.content
 
 if __name__ == '__main__':
     l = Locator()
