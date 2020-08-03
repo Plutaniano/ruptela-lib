@@ -1,6 +1,6 @@
 from parameter import Parameter
 
-class Data_Packet:
+class Config_Data_Packet:
     all = []
 
     def __init__(self, length, rawbytes):
@@ -20,3 +20,7 @@ class Data_Packet:
     
     def __repr__(self):
         return f'[DataPacket] <ID:{self.id} params:{self.param_count}>'
+
+if __name__ == '__main__':
+    from config_file import Config_File
+    f = Config_File('config sample.fk4c')

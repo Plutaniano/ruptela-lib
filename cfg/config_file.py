@@ -1,4 +1,4 @@
-from data_packet import Data_Packet
+from config_data_packet import Config_Data_Packet
 from parameter import Parameter
 
 class Config_File:
@@ -7,7 +7,7 @@ class Config_File:
         with open(filepath, 'rb') as f:
             length = int.from_bytes(f.read(2), 'little')
             while length != 0:
-                p = Data_Packet(length, f.read(length-2))
+                p = Config_Data_Packet(length, f.read(length-2))
                 self.data_packets.append(p)
                 length = int.from_bytes(f.read(2), 'little')
 
@@ -16,3 +16,6 @@ class Config_File:
         for i in self.data_packets:
             param_count += i.param_count
         return f'[cfg file] <data packets:{len(self.data_packets)} params: {param_count}>'
+
+if __name__ == '__main__':
+    f = Config_File('config sample.fk4c')
