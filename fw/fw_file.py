@@ -1,6 +1,6 @@
-from fw_data_packet import FW_Data_Packet
 import serial
 import progressbar
+from fw_data_packet import FW_Data_Packet
 
 class FW_File:
     def __init__(self, path):
