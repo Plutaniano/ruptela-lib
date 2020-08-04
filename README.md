@@ -10,7 +10,7 @@ Na aba "releases" do GitHub é possível baixar um arquivo .exe independente, qu
 Se quiser baixar e executar os arquivos Python diretamente, execute os seguinte comandos no Powershell do Windows:
 ```
 git clone https://github.com/Plutaniano/ruptela
-cd Ruptela-Locator-Utility
+cd ruptela
 python3 main.py
 ```
 Para executar os comandos acima é necessário ter o Python, o git e as bibliotecas listadas no requirements.txt instaladas.
