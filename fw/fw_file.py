@@ -17,13 +17,13 @@ class FW_File:
 
     def write(self, port, baud=115200, timeout=10):
         s = serial.Serial(port, baud, timeout=timeout)
-        print('[*] Iniciando atualização de firmware.')
+        print('[ * ] Iniciando atualização de firmware.')
         s.write(b'|FU_STRT*\r\n')
 
         incoming = s.read(9)
         if incoming != b'*FU_OK|\r\n':
             raise ValueError(f'valor lido: {incoming}')
-        print('[*] Atualização iniciada.')
+        print('--- Atualização iniciada.')
 
         for p in progressbar.progressbar(self.data_packets):
             s.write(b'|FU_PCK*' + p.format() + b'*\r\n')
@@ -31,16 +31,13 @@ class FW_File:
             if incoming != b'*FU_OK|' + p.idf() + b'\r\n':
                 raise ValueError(f'valor lido: {incoming}')
         
-        print('escrevendo fw...')
+        print('-- escrevendo fw...')
         s.write(b'|FU_WRITE*\r\n')
         if s.read(9) != b'*FU_OK|\r\n':
             print('[ERR] erro escrevendo fw.')
         else:
-            print('[*] sucesso')
+            print('[OK ] sucesso')
         s.close()
-        
-
-
 
 
 if __name__ == '__main__':
