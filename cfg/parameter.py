@@ -8,16 +8,10 @@ class Parameter:
         return f'[P] <ID:{self.id} len:{self.length}>'
 
     def idf(self):
-        id = hex(self.id)[2:].zfill(2)
-        id = bytes.fromhex(id)
-        return id
+        return int.to_bytes(self.id, 2, 'little')
 
     def lengthf(self):
-        length = hex(self.length)[2:].zfill(4)
-        length = bytes([int(length[2:], 16), int(length[:2], 16)])
-        return length
+        return int.to_bytes(self.length, 1, 'little')
    
     def valuef(self):
-        value = hex(self.value)[2:].zfill(self.length * 2)
-        value = bytes.fromhex(value)[::-1] #[::-1] for Big Endian
-        return value
+        return self.value

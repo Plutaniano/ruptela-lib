@@ -17,20 +17,14 @@ class Config_Data_Packet:
             self.parameters.append(p)
             parameters_raw = parameters_raw[2+1+param_length:]
 
-    def lengthf(self):
-        length = hex(self.length)[2:].zfill(4)
-        length = bytes([int(length[2:], 16), int(length[:2], 16)])
-        return length
-
     def idf(self):
-        id = hex(self.id)[2:].zfill(2)
-        id = bytes.fromhex(id)
-        return id
+        return int.to_bytes(self.id, 1, 'little')
+
+    def lengthf(self):
+        return int.to_bytes(self.length, 2, 'little')
     
     def param_countf(self):
-        param_count = hex(self.param_count)[2:].zfill(4)
-        param_count = bytes([int(param_count[2:], 16), int(param_count[:2], 16)])
-        return param_count
+        return int.to_bytes(self.param_count, 2, 'little')
 
     def format(self):
         string = b''

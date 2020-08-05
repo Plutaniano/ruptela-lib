@@ -1,6 +1,9 @@
 from config_data_packet import Config_Data_Packet
 from parameter import Parameter
+import serial
+import progressbar
 import os
+import time
 
 class Config_File:
     def __init__(self, filepath):
@@ -14,7 +17,6 @@ class Config_File:
                 param_count = int.from_bytes(f.read(2), 'little')
                 params = f.read(length-5)
                 p = Config_Data_Packet(length, packet_id, param_count, params)
-                print(p)
                 self.data_packets.append(p)
 
     def __repr__(self):
@@ -23,28 +25,45 @@ class Config_File:
             param_count += i.param_count
         return f'[cfg file] <data packets:{len(self.data_packets)} params: {param_count}>'
 
-    def write(self):
+    def write(self, port, baud=115200, timeout=10):
         s = serial.Serial(port, baud, timeout=timeout)
         print('[ * ] Iniciando upload de configuração.')
+        s.write(b'#cfg_reset@\r\n')
+        time.sleep(0.01)
         s.write(b'#cfg_start@\r\n')
 
-        incoming = s.read(9)
-        if incoming != b'@cfg_sts#10\r\n':
-            raise ValueError(f'valor lido: {incoming}')
+        expected_msg = b'@cfg_sts#10\r\n'
+        msg_received = s.read(len(expected_msg))
+
+        # as vezes responde 10, as vezes 01?? wtf
+        if msg_received != expected_msg and msg_received != b'@cfg_sts#01\r\n':
+            raise ValueError(f'valor lido: {msg_received}, esperado {expected_msg}')
 
         print('--- Upload inicializado.')
         for p in progressbar.progressbar(self.data_packets):
             s.write(b'#cfg_send@' + p.format() + b'*\r\n')
-            incoming = s.read(11)
-            if incoming != b'*FU_OK|' + p.idf() + b'\r\n':
-                raise ValueError(f'valor lido: {incoming}')
+
+            expected_msg = b'@cfg_sts#1' + p.idf() + b'\r\n'
+            msg_received = s.read(len(expected_msg))
+            if msg_received != expected_msg:
+                raise ValueError(f'[ERR] erro enviando data_packet. recebido:{msg_received}, esperado: {expected_msg}')
         
         print('--- escrevendo config.')
-        s.write(b'|FU_WRITE*\r\n')
-        if s.read(9) != b'*FU_OK|\r\n':
-            print('[ERR] erro escrevendo config.')
+        s.write(b'#cfg_write@\r\n')
+
+        expected_msg = b'@cfg_sts#10'
+        msg_received = s.read(len(expected_msg))
+        if msg_received != expected_msg:
+            raise ValueError(f'[ERR] erro escrevendo config. msg:{msg_received}')
         else:
-            print('[ * ] sucesso')
+            s.write(b'#cfg_end@\r\n')
+
+            expected_msg = b'\r\n@cfg_sts#\x31\x30\r\n'
+            msg_received = s.read(len(expected_msg))
+            if msg_received != expected_msg:
+                raise ValueError(f'[ERR] erro na resposta do pedido de escrita. msg:{msg_received}')
+            else:
+                print('[ OK] Sucesso.')
         s.close()
 
 if __name__ == '__main__':
