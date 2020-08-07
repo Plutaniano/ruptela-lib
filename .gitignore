@@ -7,3 +7,6 @@ relatorio*
 *~
 *.png
 *.jpg
+build/
+dist/
+*.spec

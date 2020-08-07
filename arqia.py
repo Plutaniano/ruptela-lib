@@ -22,6 +22,7 @@ class Arqia:
         self.set_options()
         self.login()
         self.get_simcards()
+        
 
     def login(self):    # abre o browser e faz login no site da Arqia
         self.driver = webdriver.Chrome(options=self.options)
@@ -31,7 +32,12 @@ class Arqia:
         form.send_keys(ARQIA_PASS)
         form.send_keys(Keys.RETURN)
         time.sleep(2)
-        print(self.driver.find_element_by_tag_name('h1').text)  # retorna a mensagem de bem-vindo
+        msg_bemvindo = self.driver.find_element_by_tag_name('h1').text
+        if 'Seja bem-vindo à Plataforma de Consumo da Arqia' in msg_bemvindo:
+            self.logged_in = True
+        else:
+            print(msg_bemvindo)
+            self.logged_in = False
         
     def get_simcards(self):
         # limpa os relatórios existentes na pasta
@@ -86,7 +92,7 @@ class Arqia:
         for sim in self.simcards:
             if sim.ICCID == ICCID:
                 return sim
-        raise Exception('ICCID não corresponde a um numero.')
+        raise KeyError('ICCID não corresponde a um numero.')
 
     # def download_file(self, url):
     #     local_filename = url.split('/')[-1]

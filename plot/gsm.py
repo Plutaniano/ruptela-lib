@@ -1,11 +1,11 @@
 import datetime as dt
 import requests
 from math import ceil, sqrt
-import matplotlib.pyplot as plt
-from locator import Locator
-from arqia import Arqia
-from classes import Object
-from collections import Counter
+# import matplotlib.pyplot as plt
+# from locator import Locator
+# from arqia import Arqia
+# from classes import Object
+# from collections import Counter
 
 MAPQUEST_API_KEY = 'Vo9PUqFKfgB7VmmRf1gYjAvMS8Ii0KPw'
 
@@ -67,16 +67,15 @@ def plot_gsm(objs, timefrom, timeto=0, s=None):
     plt.tight_layout()
     plt.show()
 
-def get_map(xlim, ylim, size='1000'):
+def get_map(xlim, ylim, size='1000,1000'):
 
     params={
         'key': MAPQUEST_API_KEY,
-        'size': f'{size},{size}',
+        'size': size,
         'type': 'map',
         'imagetype': 'png',
         'bestfit': f'{ylim[0]},{xlim[1]},{ylim[1]},{xlim[0]}'
     }
-    global map_req
     map_req = requests.get('http://www.mapquestapi.com/staticmap/v4/getmap', params=params)
     with open('map.png','wb') as f:
         f.write(map_req.content)

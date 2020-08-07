@@ -2,41 +2,46 @@ import requests
 import colored
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
-from classes import *
+
+from .client import Client
+from .web_user import Web_User
+from .object import Object
+from .packet import Packet
+from .hardware import Hardware
+
 
 # Locator
-LOCATOR_HOST = 'http://track.ruptela.lt'
-LOCATOR_LOGIN = 'ExcelProdutos'
-LOCATOR_PASS = 'sLzN58LZ'
-API_HOST = 'http://api.fm-track.com'
-API_KEY = "Al-xrBlaeH-JXIj0RuPQT6FwuPFrZZGd"
 
-class Locator:
-    def __init__(self):
+class Locator():
+    HOST = 'http://track.ruptela.lt'
+    API_HOST = 'http://api.fm-track.com'
+
+    def __init__(self, username='ExcelProdutos', password='sLzN58LZ'):
+        self.username = username
+        self.password = password
         self.login()
         if self.logged_in:
+            print('--->\t Coletando informações, por favor aguarde...')
             self.clients = self.create_clients()
             self.hardwares = self.create_hardwares()
 
-
     def login(self):
         self.session = requests.Session()
-        login_req = self.session.post(LOCATOR_HOST + '/administrator/authentication/login', {'sl': LOCATOR_LOGIN, 'ps': LOCATOR_PASS })
+        login_req = self.session.post(self.HOST + '/administrator/authentication/login', {'sl': self.username, 'ps': self.password })
         if login_req.status_code != 200:
             self.logged_in = False
-            print('Não foi possível logar no Locator.')
+            print('[ERR]\t Não foi possível logar no Locator.')
         else:
             self.logged_in = True
-            print('Login OK!')
+            print('--->\t Login OK!')
     
-
     def create_clients(self):
         headers = {'X-Requested-With': 'XMLHttpRequest'}
-        clients_req = self.session.get(LOCATOR_HOST + '/administrator/clients/getList', headers=headers)
+        clients_req = self.session.get(self.HOST + '/administrator/clients/getList', headers=headers)
         for client in clients_req.json():
             client = Client(client, self)
             setattr(self, client.company.replace(' ', '_'), client)
-        print(f'{len(Client.all)} clientes criados.')
+        print(f'--->\t {len(Client.all)} clientes criados.')
         return Client.all         
 
 
@@ -46,7 +51,7 @@ class Locator:
                 "version": "1",
                 "api_key": client.api_key,
             }
-            obj_req = self.session.get(API_HOST + '/objects', params=params)
+            obj_req = self.session.get(self.HOST + '/objects', params=params)
             for obj in obj_req.json():
                 obj = Object(obj)
                 client.objects.append(obj)
@@ -58,7 +63,7 @@ class Locator:
             'cmd': 'edit',
             'nr': '626895'      # o que é 626895?
         }
-        hw_req = self.session.get(LOCATOR_HOST + '/administrator/objects/edit', params=params)
+        hw_req = self.session.get(self.HOST + '/administrator/objects/edit', params=params)
         soup = BeautifulSoup(hw_req.content, 'html.parser')
         rows = soup.find('div', id='hardwarelist').find('table').find_all('tr')
         hardwares = []
@@ -95,7 +100,7 @@ class Locator:
             'Referer': 'http://track.ruptela.lt/administrator/connection',
             'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
         }
-        r = self.session.get(LOCATOR_HOST + '/administrator/connection/getList', headers=headers)
+        r = self.session.get(self.HOST + '/administrator/connection/getList', headers=headers)
         for row in r.json():
             if row['phone'] == phone:
                 return row['id'].strip()
@@ -175,20 +180,27 @@ class Locator:
             'password': str(password),              # FM Password
             'create': 'Create',                     # Create
         }
-        r = self.session.post(LOCATOR_HOST + '/administrator/objects/create', params)
+        print(f'[ * ]\t Criando objeto no Locator.')
+        print(f'---\t Nome: {str(name)}, cliente: {client.company}')
+        r = self.session.post(self.HOST + '/administrator/objects/create', params)
         soup = BeautifulSoup(r.text, 'html.parser')
         try:
-            string = color(soup('div', 'error')[0].contents, 'red', 'WHITE')
+            string = soup('div', 'error')[0].contents
             success = False
         except:
-            string = color(soup('span', {'class': 'done'})[0].text, 'green', 'white')
+            string = soup('span', {'class': 'done'})[0].text
+            if string == 'Done':
+                string = 'OK!'
             success = True
-        print(f'[*] Criação do objeto: {name}')
-        print(f'--- status: {string}')
+
+        print(f'--->\t status: {string}\n')
         return success
 
 
     def create_sim(self, phone, client, apn='m2m.arqia.br'):
+        print('[ * ]\t Criando SIM card no Locator.')
+        print(f'--->\t Telefone: {phone}, ')
+        print(f'--->\t Cliente: {client.company}')
         params = {
             'service_pr': 'Excel Produtos Eletronicos',
             'service_provider': '1407',
@@ -206,22 +218,16 @@ class Locator:
             'create': 'Create'
         }
         
-        r = self.session.post(LOCATOR_HOST + '/administrator/connection/create', params)
+        r = self.session.post(self.HOST + '/administrator/connection/create', params)
         soup = BeautifulSoup(r.text, 'html.parser')
         try:
-            string = color(soup('div', 'error')[0].contents[0], 'red', 'WHITE')
+            string = soup('div', 'error')[0].contents[0]
             success = False
         except:
-            string = color('OK!', 'green', 'white')
+            string = 'OK!'
             success = True
-        print(f'create_SIM: {phone} * {string}')
+        print(f'--->\t status: {string}\n')
         return success
-
-
-def color(msg, bg='RED', fg='WHITE'):
-    bg = eval(f'colored.back.{bg.upper()}')
-    fg = eval(f'colored.fore.{fg.upper()}')
-    return f'{bg}{fg}{colored.style.BOLD}{msg}{colored.style.RESET}'
 
 
 if __name__ == '__main__':

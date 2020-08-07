@@ -1,6 +1,6 @@
 import matplotlib
 import matplotlib.pyplot as plt
-from classes import *
+from .classes import *
 
 create_all_objects()
 
