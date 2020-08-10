@@ -1,8 +1,6 @@
-import sys
 import time
 import os
-import atexit
-import serial
+import colored
 from serial.tools.list_ports import comports
 
 from arqia import Arqia
@@ -25,6 +23,11 @@ def print_header():
         pass
     print('\n\n')
 
+def err_str(msg):
+    return f'{colored.back.RED}{msg}{colored.style.RESET}'
+
+def ok_str(msg):
+    return f'{colored.back.GREEN}{msg}{colored.style.RESET}'
 
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -44,15 +47,21 @@ if __name__ == '__main__':
     print('[ * ]\t Abrindo site da Arqia...')
     a = Arqia()
     if a.logged_in == True:
-        print('--->\t Login OK!')
+        print('--->\t Login ' + ok_str('OK!'))
 
     print('[ * ]\t Logando no Locator...')
     l = Locator()
     if l.logged_in == True:
-        print('--->\t Login OK!')
+        print('--->\t Login' + ok_str('OK!'))
 
     print_header()
-    CLIENT = Client.select_client()
+    CLIENT = None
+    while not isinstance(CLIENT, Client):
+        try:
+            CLIENT = Client.select_client()
+        except ValueError:
+            print_header()
+
 
     print_header()
     # força a escolha de FM-Eco4 S e renomeia para Eco4 light+ S
@@ -82,6 +91,7 @@ if __name__ == '__main__':
                 try:
                     fw_file = FW_File('')
                 except FileNotFoundError as e:
+                    e = err_str(e)
                     print(f'[ERR] {e}')
                     print(f'---> Coloque um arquivo .efwk4 na pasta do programa e tente novamente.')
                     input('<---\t Pressione ENTER para tentar novamente.')
@@ -93,7 +103,7 @@ if __name__ == '__main__':
                     input('--->\t Conecte somente um dispositivo e pressione ENTER para tentar novamente.')
 
                 elif len(dispositivos) == 0:
-                    print(f'---\t Por favor, conecte o dispositivo no computador via USB.')
+                    print(f'--->\t Por favor, conecte o dispositivo no computador via USB.')
                     input('--->\t Pressione ENTER para tentar novamente.')
 
                 else:
@@ -101,9 +111,13 @@ if __name__ == '__main__':
                     print(f'--->\t Dispositivo detectado na porta \"{port}\", iniciando atualização de firmware.')
                     try:
                         FW = not fw_file.write(port)
-                        print('--->\t Aguardando 15 segundos para reinicialização do dispositivo, por favor mantenha-o conectado.')
-                        time.sleep(15)
+                        print('--->\t Aguardando 20 segundos para reinicialização do dispositivo, por favor mantenha-o conectado.')
+                        for t in range(1,21):
+                            print(f'\r{t}', end='')
+                            time.sleep(1)
+                        print('')
                     except Exception as e:
+                        e = err_str(e)
                         print(f'[ERR] {e}')
                         input('<---\t Digite ENTER para tentar novamente.')
                     
@@ -116,6 +130,7 @@ if __name__ == '__main__':
                 try:
                     config_file = Config_File()
                 except FileNotFoundError as e:
+                    e = err_str(e)
                     print(f'[ERR]\t {e}')
                     print(f'--->\t Coloque um arquivo .fk4c na pasta do programa e tente novamente.')
                     input('<---\t Pressione ENTER para tentar novamente.')
@@ -155,7 +170,7 @@ if __name__ == '__main__':
                 int(reading)
 
             except ValueError:
-                erro = 'valor nao-numérico inserido'
+                erro = err_str('valor nao-numérico inserido')
 
             finally:
                 if len(reading) == 20:
@@ -163,7 +178,7 @@ if __name__ == '__main__':
                         phone = a.find_by_ICCID(reading).phone
                         ICCID = reading
                     except KeyError as e:
-                        erro = 'Não foi possível encontrar um sim card com o ICCID digitado.'
+                        erro = err_str('Não foi possível encontrar um sim card com o ICCID digitado.')
 
                 elif len(reading) == 9:
                     SN = reading
@@ -173,7 +188,7 @@ if __name__ == '__main__':
                     IMEI = reading
                 
                 else:
-                    erro = 'numero invalido'
+                    erro = err_str('numero invalido')
 
         print_header()
         print('Firmware:'.rjust(22, " ") + ' OK')

@@ -180,8 +180,8 @@ class Locator():
             'password': str(password),              # FM Password
             'create': 'Create',                     # Create
         }
-        print(f'[ * ]\t Criando objeto no Locator.')
-        print(f'---\t Nome: {str(name)}, cliente: {client.company}')
+        print(f'[ * ] Criando objeto no Locator.')
+        print(f'--->\t Nome: {str(name)}, cliente: {client.company}')
         r = self.session.post(self.HOST + '/administrator/objects/create', params)
         soup = BeautifulSoup(r.text, 'html.parser')
         try:
@@ -194,12 +194,14 @@ class Locator():
             success = True
 
         print(f'--->\t status: {string}\n')
+        if string != 'OK!':
+            print('--->\t Algo de errado ocorreu, enviando informações sobre erro para a engenharia.')
         return success
 
 
     def create_sim(self, phone, client, apn='m2m.arqia.br'):
-        print('[ * ]\t Criando SIM card no Locator.')
-        print(f'--->\t Telefone: {phone}, ')
+        print('[ * ] Criando SIM card no Locator.')
+        print(f'--->\t Telefone: {phone}')
         print(f'--->\t Cliente: {client.company}')
         params = {
             'service_pr': 'Excel Produtos Eletronicos',

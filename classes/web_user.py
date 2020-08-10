@@ -26,7 +26,11 @@ class Web_User:
         token = token.split('=')[1]
         headers = {'Authorization': token}
         api_key_req = locator.session.get('https://gtfrota.fm-track.com/gateway/user-service/v20181205/users/public-api-keys/', headers=headers)
-        return api_key_req.json()['items'][0]['id']
-    
+        try:
+            key = api_key_req.json()['items'][0]['id']
+        except:
+            key = []
+        return key
+        
     def __repr__(self):
         return f'[web id:{self.id}] {self.username}'
