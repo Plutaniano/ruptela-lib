@@ -25,7 +25,7 @@ class FW_File:
     def __repr__(self):
         return f'[FW_File] <data_packets:{len(self.data_packets)}>'
 
-    def write(self, port, baud=115200, timeout=10):
+    def write(self, port, baud=115200, timeout=15):
         s = serial.Serial(port, baud, timeout=timeout)
         print('--->\t Iniciando comunicação com o dispositivo.')
         s.write(b'|FU_STRT*\r\n')
@@ -37,11 +37,12 @@ class FW_File:
         print('--->\t Atualização iniciada.')
 
         for p in progressbar.progressbar(self.data_packets):
-            s.write(b'|FU_PCK*' + p.format() + b'*\r\n')
+            s.write(b'|FU_PCK*' + p.format() + b'\r\n')
 
             expected = b'*FU_OK|' + p.idf() + b'\r\n'
             incoming = s.read(len(expected))
             if incoming != expected:
+                s.close()
                 raise ValueError(f'valor lido: {incoming}, esperado: {expected}')
         
         print('--->\t Escrevendo firmware...')

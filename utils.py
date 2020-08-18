@@ -1,13 +1,12 @@
 import smtplib, ssl
 
-port = 465
-sender_user = 'excel.ruptela.info@gmail.com'
-sender_password = 'excelbr123$'
-target_email = 'lucas.rodrigues@excelbr.com.br'
 
-context = ssl.create_default_context()
+def send_email(message, subject='', to='lucas.rodrigues@excelbr.com.br'):
+    port = 465
+    sender_user = 'excel.ruptela.info@gmail.com'
+    sender_password = 'excelbr123$'
 
-with smtplib.SMTP_SSL('smtp.gmail.com', port, context=context) as server:
-    server.login(sender_user, sender_password)
-    server.sendmail(sender_user, target_email, 'test')
-        
+    context = ssl.create_default_context()
+    with smtplib.SMTP_SSL('smtp.gmail.com', port, context=context) as server:
+        server.login(sender_user, sender_password)
+        server.sendmail(sender_user, to, 'test')

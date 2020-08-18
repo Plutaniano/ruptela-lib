@@ -32,6 +32,15 @@ def ok_str(msg):
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
 
+def print_status():
+    print('Firmware:'.rjust(22, " ") + f' {CONFIG}')
+    print('Config:'.rjust(22, " ") + f' {FW}')
+    print(f'{"ICCID:".rjust(22, " ")} {ICCID}')
+    print(f'{"IMEI:".rjust(22, " ")} {IMEI}')
+    print(f'Número de Série Excel: {SN}')
+    print(f'\n{erro}')
+    erro = ''
+
 def list_ruptela_devices():
     ruptela_devices = []
     for device in comports():
@@ -42,7 +51,7 @@ def list_ruptela_devices():
 
 if __name__ == '__main__':
     print_header()
-    print('Cadastrador Ruptela v.02, utilizar somente com dispositivos Eco4 light+ S (3G ou não).\n')
+    print('Cadastrador Ruptela v.03, utilizar somente com dispositivos Eco4 light+ S (3G ou 2G).\n')
 
     print('[ * ]\t Abrindo site da Arqia...')
     a = Arqia()
@@ -111,11 +120,6 @@ if __name__ == '__main__':
                     print(f'--->\t Dispositivo detectado na porta \"{port}\", iniciando atualização de firmware.')
                     try:
                         FW = not fw_file.write(port)
-                        print('--->\t Aguardando 20 segundos para reinicialização do dispositivo, por favor mantenha-o conectado.')
-                        for t in range(1,21):
-                            print(f'\r{t}', end='')
-                            time.sleep(1)
-                        print('')
                     except Exception as e:
                         e = err_str(e)
                         print(f'[ERR] {e}')
@@ -157,13 +161,7 @@ if __name__ == '__main__':
 
 
             print_header()
-            print('Firmware:'.rjust(22, " ") + ' OK')
-            print('Config:'.rjust(22, " ") + ' OK')
-            print(f'{"ICCID:".rjust(22, " ")} {ICCID}')
-            print(f'{"IMEI:".rjust(22, " ")} {IMEI}')
-            print(f'Número de Série Excel: {SN}')
-            print(f'\n{erro}')
-            erro = ''
+            print_status()
             reading = input('--->\t Esperando leitura do codigo de barras: ')
 
             try:
@@ -191,11 +189,7 @@ if __name__ == '__main__':
                     erro = err_str('numero invalido')
 
         print_header()
-        print('Firmware:'.rjust(22, " ") + ' OK')
-        print('Config:'.rjust(22, " ") + ' OK')
-        print(f'{"ICCID:".rjust(22, " ")} {ICCID}')
-        print(f'{"IMEI:".rjust(22, " ")} {IMEI}')
-        print(f'Número de Série Excel: {SN}')
+        print_status()
 
         if input('\nDigite \'s\' para criar objeto ou qualquer outra tecla para descartar: ') in ['s', 'S']:
 
