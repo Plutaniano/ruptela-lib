@@ -1,0 +1,2 @@
+-Adicionar check para verificar se o serial number escaneado é o da Excel e não o da Ruptela.
+-status: a fazer
