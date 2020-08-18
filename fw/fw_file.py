@@ -50,6 +50,7 @@ class FW_File:
             raise ValueError('Erro escrevendo firmware.')
         else:
             print('--->\t Sucesso.')
+        s.write(b'|FU_END*')
         s.close()
         return 0
 

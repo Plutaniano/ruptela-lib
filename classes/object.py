@@ -1,3 +1,9 @@
+import datetime
+import requests
+import sys
+
+from .packet import Packet
+
 class Object:
     all = []
 
@@ -15,8 +21,8 @@ class Object:
         raise Exception('Object not found.')
 
     def get_interval(self, time_from, time_to=0):
-        time_from = (dt.datetime.utcnow() - dt.timedelta(days=time_from)).isoformat()[:-3] + 'Z'
-        time_to = (dt.datetime.utcnow() - dt.timedelta(days=time_to)).isoformat()[:-3] + 'Z'
+        time_from = (datetime.datetime.utcnow() - datetime.timedelta(days=time_from)).isoformat()[:-3] + 'Z'
+        time_to = (datetime.datetime.utcnow() - datetime.timedelta(days=time_to)).isoformat()[:-3] + 'Z'
         params = {
             'version': 2,
             'api_key': self.client.web_users[0].api_key,
@@ -25,7 +31,7 @@ class Object:
             'limit': 1000           # maximo é 1000
         }
 
-        r = requests.get(Locator.API_HOST + f'/objects/{self.id}/coordinates', params=params)
+        r = requests.get(self.client.locator.API_HOST + f'/objects/{self.id}/coordinates', params=params)
         print(f'[{self.name}] Requisitando pacotes... ', end="")
         packets = []
         try:
@@ -34,13 +40,13 @@ class Object:
 
             while r.json()['continuation_token'] != None:
                 params['continuation_token'] = r.json()['continuation_token']
-                r = requests.get(Locator.HOST + f'/objects/{self.id}/coordinates', params=params)
+                r = requests.get(self.client.locator.HOST + f'/objects/{self.id}/coordinates', params=params)
                 print('*', end='')
                 sys.stdout.flush()
                 for i in r.json()['items']:
                     packets.append(Packet(i, self))
-        except:
-            print(r.json())
+        except Exception as e:
+            print(e)
         print(f'\n{len(packets)} pacotes.')
         return packets
 

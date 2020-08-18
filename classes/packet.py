@@ -1,8 +1,10 @@
+import datetime
+
 class Packet:
     def __init__(self, d, owner):
         self.object = owner
         self.object_id = d['object_id']
-        self.datetime = time_convert(d['datetime'])
+        self.datetime = datetime.datetime.strptime(d['datetime'], '%Y-%m-%dT%H:%M:%S.%fZ')
         self.ignition_status = d['ignition_status']
         self.position = d['position']
         self.virtual_gps_odometer = d['inputs']['other']['virtual_gps_odometer']

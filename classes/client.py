@@ -48,6 +48,12 @@ class Client:
             objs.append(Object(obj, self))
         return objs
 
+    def find_by_name(self, name):
+        for i in self.objects:
+            if i.name == name:
+                return i
+        raise NameError('Não foi possível encontrar objeto com o nome especificado.')
+
     @classmethod
     def select_client(cls):
         for client in cls.all:
