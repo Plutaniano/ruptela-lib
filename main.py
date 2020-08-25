@@ -97,7 +97,7 @@ if __name__ == '__main__':
                 print('--->\t Buscando arquivo *.efwk4...')
 
                 try:
-                    fw_file = FW_File('')
+                    fw_file = FW_File()
                 except FileNotFoundError as e:
                     e = err_str(e)
                     print(f'[ERR] {e}')

@@ -39,17 +39,26 @@ class Client:
     
     def create_objects(self):
         try:
-            params={
-                "version": "1",
-                "api_key": self.web_users[0].api_key
-            }
-            objs_req = requests.get("http://api.fm-track.com/objects", params=params)
-            objs = []
-            for obj in objs_req.json():
-                objs.append(Object(obj, self))
-            return objs
-        except TypeError as e:
-            print('Não foi possível carregar os objetos pois o Cliente não tem uma api-key.', e)
+            assert(self.web_users != [])
+        except AssertionError as e:
+            print(f'Não foi possível encontrar um web_user para o cliente {self.company}')
+            return
+        
+        try:
+            assert(self.web_users[0].api_key != [])
+        except AssertionError as e:
+            print(f'Não foi possível encontrar uma api-key para o web user {self.web_users[0]}')
+            return
+
+        params={
+            "version": "1",
+            "api_key": self.web_users[0].api_key
+        }
+        objs_req = requests.get("http://api.fm-track.com/objects", params=params)
+        objs = []
+        for obj in objs_req.json():
+            objs.append(Object(obj, self))
+        return objs
 
     def find_by_name(self, name):
         for i in self.objects:
