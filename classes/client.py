@@ -38,15 +38,18 @@ class Client:
         return web_users
     
     def create_objects(self):
-        params={
-            "version": "1",
-            "api_key": self.web_users[0].api_key
-        }
-        objs_req = requests.get("http://api.fm-track.com/objects", params=params)
-        objs = []
-        for obj in objs_req.json():
-            objs.append(Object(obj, self))
-        return objs
+        try:
+            params={
+                "version": "1",
+                "api_key": self.web_users[0].api_key
+            }
+            objs_req = requests.get("http://api.fm-track.com/objects", params=params)
+            objs = []
+            for obj in objs_req.json():
+                objs.append(Object(obj, self))
+            return objs
+        except TypeError as e:
+            print('Não foi possível carregar os objetos pois o Cliente não tem uma api-key.', e)
 
     def find_by_name(self, name):
         for i in self.objects:

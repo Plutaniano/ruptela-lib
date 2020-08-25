@@ -32,16 +32,15 @@ def ok_str(msg):
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
 
-def print_status():
-    print('Firmware:'.rjust(22, " ") + f' {CONFIG}')
-    print('Config:'.rjust(22, " ") + f' {FW}')
+def print_status(erro):
+    print('Firmware:'.rjust(22, " ") + f"{'OK' if FW == True else 'ERRO'}")
+    print('Config:'.rjust(22, " ") + f"{'OK' if CONFIG == True else 'ERRO'}")
     print(f'{"ICCID:".rjust(22, " ")} {ICCID}')
     print(f'{"IMEI:".rjust(22, " ")} {IMEI}')
     print(f'Número de Série Excel: {SN}')
     print(f'\n{erro}')
-    erro = ''
 
-def list_ruptela_devices():
+def list_connected_devices():
     ruptela_devices = []
     for device in comports():
         if 'STMicroelectronics' in device.description:
@@ -106,7 +105,7 @@ if __name__ == '__main__':
                     input('<---\t Pressione ENTER para tentar novamente.')
                     continue
 
-                dispositivos = list_ruptela_devices()
+                dispositivos = list_connected_devices()
                 if len(dispositivos) > 1:
                     print('--->\t Mais de um dispositivo Ruptela detectado.')
                     input('--->\t Conecte somente um dispositivo e pressione ENTER para tentar novamente.')
@@ -140,7 +139,7 @@ if __name__ == '__main__':
                     input('<---\t Pressione ENTER para tentar novamente.')
                     continue
 
-                dispositivos = list_ruptela_devices()
+                dispositivos = list_connected_devices()
                 if len(dispositivos) > 1:
                     print('--->\t Mais de um dispositivo Ruptela detectado.')
                     input('<---\t Conecte somente um dispositivo e pressione ENTER para tentar novamente.')
@@ -158,10 +157,8 @@ if __name__ == '__main__':
                         print(f'[ERR] {e}')
                         input('<---\t Digite ENTER para tentar novamente.')
 
-
-
             print_header()
-            print_status()
+            print_status(erro)
             reading = input('--->\t Esperando leitura do codigo de barras: ')
 
             try:
@@ -189,7 +186,7 @@ if __name__ == '__main__':
                     erro = err_str('numero invalido')
 
         print_header()
-        print_status()
+        print_status(erro)
 
         if input('\nDigite \'s\' para criar objeto ou qualquer outra tecla para descartar: ') in ['s', 'S']:
 
