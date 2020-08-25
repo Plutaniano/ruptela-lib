@@ -20,7 +20,10 @@ class Client:
         self.web_users = self.create_web_users(locator)
         # pega a api_key do primeiro webuser
         # mudar para uma lista ou dict no futuro?
-        self.api_key = self.web_users[0].api_key
+        try:
+            self.api_key = self.web_users[0].api_key
+        except IndexError as e:
+            print(f'O cliente {self.company} nao possui um web user')
         self.objects = self.create_objects()
 
     def __repr__(self):
@@ -42,13 +45,13 @@ class Client:
             assert(self.web_users != [])
         except AssertionError as e:
             print(f'Não foi possível encontrar um web_user para o cliente {self.company}')
-            return
+            return []
         
         try:
             assert(self.web_users[0].api_key != [])
         except AssertionError as e:
             print(f'Não foi possível encontrar uma api-key para o web user {self.web_users[0]}')
-            return
+            return []
 
         params={
             "version": "1",

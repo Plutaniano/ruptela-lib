@@ -57,12 +57,16 @@ class Arqia:
 
         # compara a lista de arquivos antes de baixar o relatório com
         # a lista de arquivos após o download, sai do loop com o arquivo novo em 'file'
+        file = ''
         for file in os.listdir('.'):
             if file not in before_files:
                 break
         
         # extrai o .csv do .zip, lê cada linha do arquivo .csv e cria os objetos Sim_Card
+        if file == '':
+            raise FileNotFoundError('Não foi possível baixar o relatório de sim cards.')
         filename = file
+
         with ZipFile(filename) as f:
             f.extractall()
         with open(filename[:-4] + '.csv', 'r') as f:
@@ -93,15 +97,6 @@ class Arqia:
             if sim.ICCID == ICCID:
                 return sim
         raise KeyError('ICCID não corresponde a um numero.')
-
-    # def download_file(self, url):
-    #     local_filename = url.split('/')[-1]
-    #     with self.session.get(url, stream=True) as r:
-    #         r.raise_for_status()
-    #         with open(local_filename, 'wb') as f:
-    #             for chunk in r.iter_content(chunk_size=8192):
-    #                 f.write(chunk)
-    #     return local_filename
 
     def __repr__(self):
         return f'[Arqia] {len(self.simcards)} sim cards.'
