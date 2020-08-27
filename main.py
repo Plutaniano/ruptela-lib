@@ -34,7 +34,7 @@ def clear():
 
 def print_status(erro):
     print('Firmware:'.rjust(22, " ") + f"{'OK' if FW == True else 'ERRO'}")
-    print('Config:'.rjust(22, " ") + f"{'OK' if CONFIG == True else 'ERRO'}")
+    print('Config:'.rjust(22, " ") + f"{'OK' if CONFIG == True else 'Não ajustada'}")
     print(f'{"ICCID:".rjust(22, " ")} {ICCID}')
     print(f'{"IMEI:".rjust(22, " ")} {IMEI}')
     print(f'Número de Série Excel: {SN}')
@@ -47,6 +47,41 @@ def list_connected_devices():
             ruptela_devices.append(device)
     return ruptela_devices
 
+def config_routine():
+    cfg_status = 0
+    while not cfg_status:
+        print_header()
+        print(f'[ * ] Atualização de config')
+        print('--->\t Buscando arquivo *.fk4c...')
+
+        try:
+            config_file = Config_File()
+        except FileNotFoundError as e:
+            e = err_str(e)
+            print(f'[ERR]\t {e}')
+            print(f'--->\t Coloque um arquivo .fk4c na pasta do programa e tente novamente.')
+            input('<---\t Pressione ENTER para tentar novamente.')
+            continue
+
+        dispositivos = list_connected_devices()
+        if len(dispositivos) > 1:
+            print('--->\t Mais de um dispositivo Ruptela detectado.')
+            input('<---\t Conecte somente um dispositivo e pressione ENTER para tentar novamente.')
+
+        elif len(dispositivos) == 0:
+            print(f'--->\t Por favor, conecte o dispositivo no computador via USB.')
+            input('<---\t Pressione ENTER para tentar novamente.')
+
+        else:
+            port = dispositivos[0].device
+            print(f'--->\t Dispositivo detectado na porta \"{port}\", iniciando atualização de config.')
+            try:
+                cfg_status = not config_file.write(port)
+            except Exception as e:
+                print(f'[ERR] {e}')
+                input('<---\t Digite ENTER para tentar novamente.')
+
+
 
 if __name__ == '__main__':
     print_header()
@@ -56,11 +91,15 @@ if __name__ == '__main__':
     a = Arqia()
     if a.logged_in == True:
         print('--->\t Login ' + ok_str('OK!'))
+        print(f'--->\t {len(a.simcards)} sim cards cadastrados.')
 
     print('[ * ]\t Logando no Locator...')
     l = Locator()
     if l.logged_in == True:
         print('--->\t Login' + ok_str('OK!'))
+    
+    print('[ * ]\t Obtendo firmware...')
+    fw_file = FW_File()
 
     print_header()
     CLIENT = None
@@ -94,16 +133,6 @@ if __name__ == '__main__':
             while not FW:
                 print_header()
                 print(f'[ * ] Atualização de firmware')
-                print('--->\t Buscando arquivo *.efwk4...')
-
-                try:
-                    fw_file = FW_File()
-                except FileNotFoundError as e:
-                    e = err_str(e)
-                    print(f'[ERR] {e}')
-                    print(f'---> Coloque um arquivo .efwk4 na pasta do programa e tente novamente.')
-                    input('<---\t Pressione ENTER para tentar novamente.')
-                    continue
 
                 dispositivos = list_connected_devices()
                 if len(dispositivos) > 1:
@@ -123,40 +152,7 @@ if __name__ == '__main__':
                         e = err_str(e)
                         print(f'[ERR] {e}')
                         input('<---\t Digite ENTER para tentar novamente.')
-                    
             
-            while not CONFIG:
-                print_header()
-                print(f'[ * ] Atualização de config')
-                print('--->\t Buscando arquivo *.fk4c...')
-
-                try:
-                    config_file = Config_File()
-                except FileNotFoundError as e:
-                    e = err_str(e)
-                    print(f'[ERR]\t {e}')
-                    print(f'--->\t Coloque um arquivo .fk4c na pasta do programa e tente novamente.')
-                    input('<---\t Pressione ENTER para tentar novamente.')
-                    continue
-
-                dispositivos = list_connected_devices()
-                if len(dispositivos) > 1:
-                    print('--->\t Mais de um dispositivo Ruptela detectado.')
-                    input('<---\t Conecte somente um dispositivo e pressione ENTER para tentar novamente.')
-
-                elif len(dispositivos) == 0:
-                    print(f'--->\t Por favor, conecte o dispositivo no computador via USB.')
-                    input('<---\t Pressione ENTER para tentar novamente.')
-
-                else:
-                    port = dispositivos[0].device
-                    print(f'--->\t Dispositivo detectado na porta \"{port}\", iniciando atualização de config.')
-                    try:
-                        CONFIG = not config_file.write(port)
-                    except Exception as e:
-                        print(f'[ERR] {e}')
-                        input('<---\t Digite ENTER para tentar novamente.')
-
             print_header()
             print_status(erro)
             reading = input('--->\t Esperando leitura do codigo de barras: ')
@@ -184,6 +180,8 @@ if __name__ == '__main__':
                 
                 else:
                     erro = err_str('numero invalido')
+        
+        CONFIG = config_routine()
 
         print_header()
         print_status(erro)

@@ -80,14 +80,12 @@ class Arqia:
         for file in files:
             if 'relatorio' in file:
                 os.remove(file)
-
-        # salva a lista de Sim_Cards no atributo simcards
         self.simcards = simcards
 
     def set_options(self):      #define algumas opções para o browser "virtual"
         options = Options()
         options.headless = True
-        prefs = {"download.default_directory" : f"{os.getcwd()}"}
+        prefs = {"download.default_directory" : os.getcwd()}
         options.add_experimental_option('excludeSwitches', ['enable-logging'])
         options.add_experimental_option("prefs",prefs)
         self.options = options
@@ -96,7 +94,7 @@ class Arqia:
         for sim in self.simcards:
             if sim.ICCID == ICCID:
                 return sim
-        raise KeyError('ICCID não corresponde a um numero.')
+        raise KeyError(f'O ICCID {ICCID} não corresponde a um número.')
 
     def __repr__(self):
         return f'[Arqia] {len(self.simcards)} sim cards.'

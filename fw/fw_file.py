@@ -47,8 +47,11 @@ class FW_File:
         
         print('--->\t Escrevendo firmware...')
         s.write(b'|FU_WRITE*\r\n')
-        if s.read(9) != b'*FU_OK|\r\n':
-            raise ValueError('Erro escrevendo firmware.')
+        expected = b'*FU_OK|\r\n'
+        incoming = s.read(len(expected))
+
+        if incoming != expected:
+            raise ValueError('Erro escrevendo firmware. Esperado: {expected}, recebido: {incoming}')
         else:
             print('--->\t Sucesso.')
         s.write(b'|FU_END*')

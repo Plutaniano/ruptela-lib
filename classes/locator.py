@@ -1,12 +1,9 @@
 import requests
-import colored
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 
 from .client import Client
-from .web_user import Web_User
 from .object import Object
-from .packet import Packet
 from .hardware import Hardware
 
 
@@ -138,7 +135,7 @@ class Locator():
             self.create_sim(phone, client)
             phone_id = self._get_phone_id(phone)
         params = {
-            'client': str(client.id),                  # Client ID - 51879=Colorado
+            'client': str(client.id),               # Client ID - 51879=Colorado
             'object': str(name),                    # Object Name
             'type': 'vehicle',                      # vehicle or trailer
             'state': '1',                           # State: 1-'' 2-'New/not installed' 3-Testing 4-For Repair 5-Uninstalled
