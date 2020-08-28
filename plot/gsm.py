@@ -1,11 +1,12 @@
 import datetime as dt
 import requests
 from math import ceil, sqrt
-# import matplotlib.pyplot as plt
-# from locator import Locator
-# from arqia import Arqia
-# from classes import Object
-# from collections import Counter
+import matplotlib.pyplot as plt
+from classes import Locator
+from arqia import Arqia
+from classes import Object
+from collections import Counter
+from classes.object import Object
 
 MAPQUEST_API_KEY = 'Vo9PUqFKfgB7VmmRf1gYjAvMS8Ii0KPw'
 

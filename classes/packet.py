@@ -7,6 +7,7 @@ class Packet:
         self.datetime = datetime.datetime.strptime(d['datetime'], '%Y-%m-%dT%H:%M:%S.%fZ')
         self.ignition_status = d['ignition_status']
         self.position = d['position']
+        self.power_supply_voltage = d['inputs']['device_inputs']['power_supply_voltage']
         self.virtual_gps_odometer = d['inputs']['other']['virtual_gps_odometer']
         try:
             self.gsm_signal_strength = d['inputs']['device_inputs']['gsm_signal_strength']

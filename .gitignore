@@ -10,3 +10,4 @@ relatorio*
 build/
 dist/
 *.spec
+debug.log
