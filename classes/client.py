@@ -21,7 +21,7 @@ class Client:
         self.create_objects()
 
     def __repr__(self):
-        return f'[Client] <company:{self.company}>'
+        return f'[Client] <company:{self.company} objects:{len(self.objects)}>'
 
     def create_web_users(self):
         headers = {'X-Requested-With': 'XMLHttpRequest'}

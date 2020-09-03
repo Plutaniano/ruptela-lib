@@ -2,7 +2,6 @@ import datetime
 import requests
 import sys
 
-from .packet import Packet
 
 class Object:
     all = []
@@ -32,23 +31,24 @@ class Object:
         }
 
         r = requests.get(self.client.locator.API_HOST + f'/objects/{self.id}/coordinates', params=params)
-        print(f'[{self.name}] Requisitando pacotes... ', end="")
+        print(f'[{self.name}] Requisitando pacotes... ', end="", flush=True)
         packets = []
         try:
             for i in r.json()['items']:
-                packets.append(Packet(i, self))
+                packets.append(i)
 
             while r.json()['continuation_token'] != None:
                 params['continuation_token'] = r.json()['continuation_token']
-                r = requests.get(self.client.locator.HOST + f'/objects/{self.id}/coordinates', params=params)
-                print('*', end='')
-                sys.stdout.flush()
+                r = requests.get(self.client.locator.API_HOST + f'/objects/{self.id}/coordinates', params=params)
+                print('*', end='', flush=True)
                 for i in r.json()['items']:
-                    packets.append(Packet(i, self))
+                    packets.append(i)
+            print(f'\n{len(packets)} pacotes.')
+            return packets
         except Exception as e:
-            print(e)
-        print(f'\n{len(packets)} pacotes.')
-        return packets
+            print('retornando o ultimo request')
+            return r
+        
 
     def __repr__(self):
         return f'[Obj][{self.name}]'

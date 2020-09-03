@@ -114,7 +114,7 @@ class Locator():
         description='.',
         drivers_phone='',
         serial='',
-        template_id='672',
+        template_id='2531',
         delay_hour='00',
         delay_min='30',
         make='',
@@ -148,7 +148,7 @@ class Locator():
             'hardware': str(hardware),              # Hardware - ex: 'FM-Eco4 S'
             'hardware_id': hardware.id,             # Hardware ID - FM Eco4 S=157
             'soft': hardware.soft_id,               # Soft ID
-            'template_id': str(template_id),        # Template ID - Default 672 para EU**Standart**ECO4-S
+            'template_id': str(template_id),        # Template ID - Default 2531 para "GTFrota Eco Light"
             'delay_hour': str(delay_hour),          # Delay hour
             'delay_min': str(delay_min),            # Delay minutes
             'make': str(make),                      # Make

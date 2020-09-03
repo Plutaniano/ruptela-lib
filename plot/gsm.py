@@ -37,8 +37,8 @@ def plot_gsm(objs, timefrom, timeto=0, s=None):
         packets = obj.get_interval(timefrom, timeto)
 
         for p in packets:
-            lon.append(p.position["longitude"])
-            lat.append(p.position["latitude"])
+            lon.append(p['position']["longitude"])
+            lat.append(p['position']["latitude"])
             if p.gsm_signal_strength in [None, 255] :
                 gsm.append(0)
             else:
