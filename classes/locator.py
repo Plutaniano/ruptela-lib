@@ -9,8 +9,10 @@ from .hardware import Hardware
 
 # Locator
 
+clients_req = 0
+
 class Locator():
-    HOST = 'http://track.ruptela.lt'
+    HOST = 'https://track.ruptela.lt'
     API_HOST = 'http://api.fm-track.com'
 
     def __init__(self, username='ExcelProdutos', password='sLzN58LZ'):
@@ -24,7 +26,16 @@ class Locator():
 
     def login(self):
         self.session = requests.Session()
-        login_req = self.session.post(self.HOST + '/administrator/authentication/login', {'sl': self.username, 'ps': self.password })
+        params = (
+            ('page', 'authentication'),
+            ('action', 'login'),
+            )
+        data = {
+            'sl': 'ExcelProdutos',
+            'ps': 'sLzN58LZ'
+            }
+
+        login_req = self.session.post(self.HOST + '/administrator/authentication/login', params=params, data=data)
         if login_req.status_code != 200:
             self.logged_in = False
             print('[ERR]\t Não foi possível logar no Locator.')
@@ -33,7 +44,20 @@ class Locator():
             print('--->\t Login OK!')
     
     def create_clients(self):
-        headers = {'X-Requested-With': 'XMLHttpRequest'}
+        headers = {
+            'Connection': 'keep-alive',
+            'Accept': 'application/javascript, application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-Range': 'items=0-29',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36 OPR/70.0.3728.154',
+            'Range': 'items=0-29',
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Sec-Fetch-Site': 'same-origin',
+            'Sec-Fetch-Mode': 'cors',
+            'Sec-Fetch-Dest': 'empty',
+            'Referer': 'https://track.ruptela.lt/administrator/clients',
+            'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+        }
         clients_req = self.session.get(self.HOST + '/administrator/clients/getList', headers=headers)
         for client in clients_req.json():
             client = Client(client, self)
@@ -160,7 +184,7 @@ class Locator():
             'temp_payment_plan_id': str(tppid),     # Temporary Payment Plan
             'temp_from_date': datetime.today().strftime('%Y-%m-%d'),
             'temp_to_date': (datetime.today() + timedelta(days=30)).strftime('%Y-%m-%d'),
-            'payment_plan_id': str(ppid),           # Payment Plan ID - default 'Demo'=2911
+            'payment_plan_id': str(ppid),           # Payment Plan ID - default 'TrustTrack2 Standart' = 3237
             'enforce_disable_payment_plan': '0',    # Enforce disable payment plant
             'preselected_payment_plan': '',         # Preselected payment plan
             'installer': str(installer),            # Installer

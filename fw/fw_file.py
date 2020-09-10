@@ -68,6 +68,7 @@ class FW_File:
         s = BeautifulSoup(r.content, features="html.parser")
         regex = re.compile('FM.*efwk4')
         tag = s.find('a', text=regex)
+        print(f'--->\t Arquivo: {tag.text}')
         
         r = requests.get('https://doc.ruptela.lt' + tag['href'], allow_redirects=True)
         return r.content

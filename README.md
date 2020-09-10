@@ -91,4 +91,9 @@ Seja bem-vindo à Plataforma de Consumo da Arqia.
 ```
 
 
+# Erros
+### Erros relacionados a chromedriver.exe
+
+Provavelmente o chromedriver.exe está numa versão incompatível com a versão do Chrome instalada no computador. Verifique a versão do Chrome, baixe o chromedriver.exe correspondente e coloquei o na pasta do Cadastrador.
+
 
