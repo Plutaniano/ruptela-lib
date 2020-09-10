@@ -1,4 +1,5 @@
 from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 import time
@@ -25,7 +26,7 @@ class Arqia:
         
 
     def login(self):    # abre o browser e faz login no site da Arqia
-        self.driver = webdriver.Chrome(options=self.options)
+        self.driver = webdriver.Chrome(ChromeDriverManager(log_level='0').install(), options=self.options)
         self.driver.get(ARQIA_HOST)
         self.driver.find_element_by_id('login').send_keys(ARQIA_LOGIN)
         form = self.driver.find_element_by_id('senha')
