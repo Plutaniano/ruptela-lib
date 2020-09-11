@@ -36,13 +36,15 @@ def plot_gsm(objs, timefrom, timeto=0, s=None):
     for obj in objs:
         packets = obj.get_interval(timefrom, timeto)
 
+        
         for p in packets:
             lon.append(p['position']["longitude"])
             lat.append(p['position']["latitude"])
-            if p.gsm_signal_strength in [None, 255] :
+            try:
+                p_gsm = p['inputs']['device_inputs']['gsm_signal_strength']
+                gsm.append(p_gsm)
+            except:
                 gsm.append(0)
-            else:
-                gsm.append(p.gsm_signal_strength)
 
     bar_ax = plt.subplot2grid((9,9), (8,0), colspan=9)
     c = Counter(gsm)
