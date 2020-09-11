@@ -7,30 +7,7 @@ from arqia import Arqia
 from classes import *
 from cfg import *
 from fw import *
-
-def print_header():
-    clear()
-    print('      :::::::::::::    ::: :::::::: :::::::::::::       ::::::::: :::::::::') 
-    print('     :+:       :+:    :+::+:    :+::+:       :+:       :+:    :+::+:    :+:') 
-    print('    +:+        +:+  +:+ +:+       +:+       +:+       +:+    +:++:+    +:+ ') 
-    print('   +#++:++#    +#++:+  +#+       +#++:++#  +#+       +#++:++#+ +#++:++#:   ') 
-    print('  +#+        +#+  +#+ +#+       +#+       +#+       +#+    +#++#+    +#+   ') 
-    print(' #+#       #+#    #+##+#    #+##+#       #+#       #+#    #+##+#    #+#    ') 
-    print('#############    ### ######## ############################# ###    ###     ')
-    try:
-        print(f'Hardware: {HARDWARE.name}    Cliente: {CLIENT.company}')
-    except:
-        pass
-    print('\n\n')
-
-def err_str(msg):
-    return f'{colored.back.RED}{msg}{colored.style.RESET}'
-
-def ok_str(msg):
-    return f'{colored.back.GREEN}{msg}{colored.style.RESET}'
-
-def clear():
-    os.system('cls' if os.name == 'nt' else 'clear')
+from utils import *
 
 def print_status(erro):
     print('Firmware:'.rjust(22, " ") + f"{'OK' if FW == True else 'ERRO'}")
