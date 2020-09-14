@@ -8,7 +8,6 @@ import requests
 from bs4 import BeautifulSoup
 from zipfile import ZipFile
 import os
-import atexit
 
 
 ARQIA_HOST = 'http://arqia.saitro.com'
@@ -100,17 +99,15 @@ class Arqia:
     def __repr__(self):
         return f'[Arqia] {len(self.simcards)} sim cards.'
 
-class Sim_Card:
-    def __init__(self, row):
+class Arqia_Sim_Card(Sim_Card):
+    def __init__(self, operator, row):
+        super().__init__(operator, row['MSISDN'], row['ICCID'], row['Nome Fantasia'])
         self.name = row['Nome Fantasia']
         self.cpf = row['CPF/CNPJ']
-        self.ICCID = row['ICCID']
-        self.phone = row['MSISDN']
         self.IMSI = row['IMSI']
         self.info = row['Info']
         self.activation = (row['Data Ativação'], row['Hora Ativação'])
         self.lastaccess = row['Data de Último Acesso']
-        self.operator = row['Operadora']
         self.plan = row['Plano']
         self.LBS = row['LBS']
         if row['Status'] == 'Ativo':
@@ -124,21 +121,6 @@ class Sim_Card:
             self.is_online = True
         else:
             self.is_online = False
-    
-    def __repr__(self):
-        intl_code = self.phone[:2]
-        area_code = self.phone[2:4]
-        phone = self.phone[4:]
-        return f'[SIM] +{intl_code} ({area_code}) {phone[:5]}-{phone[5:]}'
-
-
-
-def exit_handler():     
-    # fecha os browsers abertos quando o programa é encerrado
-    for i in Arqia.all:
-        i.driver.quit()
-atexit.register(exit_handler)
-
 
 if __name__ == '__main__':
     a = Arqia()
