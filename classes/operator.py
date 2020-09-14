@@ -3,7 +3,9 @@ import atexit
 
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
+
 from .sim_card import Sim_Card
 
 class Operator:
@@ -32,11 +34,12 @@ class Operator:
     
     def create_webdriver(self) -> None:
         manager = ChromeDriverManager(log_level='0').install()
-        self.driver = webdriver.Chrome(manager, options=self.options) 
+        self.driver = webdriver.Chrome(manager, options=self.options)
+        self.driver.keys = Keys
 
     def set_options(self) -> None:      #define algumas opções para o browser "virtual"
         options = Options()
-        options.headless = False
+        options.headless = True
         prefs = {"download.default_directory" : os.getcwd()}
         options.add_experimental_option('excludeSwitches', ['enable-logging'])
         options.add_experimental_option("prefs",prefs)

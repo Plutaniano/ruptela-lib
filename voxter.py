@@ -5,9 +5,6 @@ from typing import List
 
 from classes.operator import Operator
 from classes.sim_card import Sim_Card
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.chrome.options import Options
 
 
 class Voxter(Operator):
@@ -22,7 +19,7 @@ class Voxter(Operator):
         id_form.send_keys(self.username)
         pw_form = self.driver.find_element_by_id('password')
         pw_form.send_keys(self.password)
-        pw_form.send_keys(Keys.RETURN)
+        pw_form.send_keys(self.driver.keys.RETURN)
         time.sleep(5)
 
     def get_simcards(self) -> None:
@@ -127,7 +124,7 @@ class Voxter_Sim_Card(Sim_Card):
     def __init__(self, operator, data):
         if data['line'] == '9999999999999':
             data['line'] = None
-            
+
         super().__init__(operator, data['line'], data['iccid'], data['fantasyname'])
         del data['line'], data['iccid'], data['fantasyname']
         for key in data.keys():
