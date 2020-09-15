@@ -1,7 +1,6 @@
 import time
 import requests
 import json
-from typing import List
 
 from classes.operator import Operator
 from classes.sim_card import Sim_Card
@@ -11,7 +10,7 @@ class Voxter(Operator):
     def __init__(self) -> None:
         super().__init__('Voxter', 'Ricardo@excelbr.com.br', '102030', 'http://lara.voxter.com.br')
         self.login()
-        self.get_simcards()
+        self.sync_simcards()
 
     def login(self) -> None:
         self.driver.get(self.host + '/login.html')
@@ -20,9 +19,9 @@ class Voxter(Operator):
         pw_form = self.driver.find_element_by_id('password')
         pw_form.send_keys(self.password)
         pw_form.send_keys(self.driver.keys.RETURN)
-        time.sleep(5)
+        time.sleep(8)
 
-    def get_simcards(self) -> None:
+    def sync_simcards(self) -> None:
         url = 'https://lara.voxter.com.br:8080/simcards/datatables'
 
         userdata = self.driver.execute_script("return window.localStorage.getItem('voxter-userdata');")
