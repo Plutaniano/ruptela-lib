@@ -1,36 +1,28 @@
-from selenium import webdriver
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.chrome.options import Options
 import time
 import csv
-import requests
-from bs4 import BeautifulSoup
-from zipfile import ZipFile
 import os
+from zipfile import ZipFile
+
+from classes.operator import Operator
+from classes.sim_card import Sim_Card
 
 
-ARQIA_HOST = 'http://arqia.saitro.com'
-ARQIA_LOGIN = 'estenio.benatti@excelbr.com.br'
-ARQIA_PASS = 'd79d4'
-
-class Arqia:
+class Arqia(Operator):
     all = []
     
-    def __init__(self):     # inicializa o objeto Arqia com alguns atributos
-        self.all.append(self)
+    def __init__(self):
+        super().__init__('Arqia', 'estenio.benatti@excelbr.com.br', 'd79d4', 'http://arqia.saitro.com')
         self.set_options()
         self.login()
         self.get_simcards()
         
 
-    def login(self):    # abre o browser e faz login no site da Arqia
-        self.driver = webdriver.Chrome(ChromeDriverManager(log_level='0').install(), options=self.options)
-        self.driver.get(ARQIA_HOST)
-        self.driver.find_element_by_id('login').send_keys(ARQIA_LOGIN)
+    def login(self) -> None:
+        self.driver.get(self.host)
+        self.driver.find_element_by_id('login').send_keys(self.username)
         form = self.driver.find_element_by_id('senha')
-        form.send_keys(ARQIA_PASS)
-        form.send_keys(Keys.RETURN)
+        form.send_keys(self.password)
+        form.send_keys(self.driver.keys.RETURN)
         time.sleep(2)
         msg_bemvindo = self.driver.find_element_by_tag_name('h1').text
         if 'Seja bem-vindo à Plataforma de Consumo da Arqia' in msg_bemvindo:
@@ -39,7 +31,7 @@ class Arqia:
             print(msg_bemvindo)
             self.logged_in = False
         
-    def get_simcards(self):
+    def get_simcards(self) -> None:
         # limpa os relatórios existentes na pasta
         files = os.listdir('.')
         for file in files:
@@ -50,7 +42,7 @@ class Arqia:
         before_files = os.listdir('.')
 
         # baixa relatório de sim cards  atualizado
-        self.driver.get(ARQIA_HOST + '/relatorios/')
+        self.driver.get(self.host + '/relatorios/')
         button = self.driver.find_element_by_css_selector('table tbody tr td div input')
         button.click()
         time.sleep(1)
@@ -73,7 +65,7 @@ class Arqia:
             csv_reader = csv.DictReader(f, delimiter=';')
             simcards = []
             for row in csv_reader:
-                simcards.append(Sim_Card(row))
+                simcards.append(Arqia_Sim_Card(self, row))
 
         # limpa os arquivos baixados/utilizados
         files = os.listdir('.')
@@ -82,25 +74,9 @@ class Arqia:
                 os.remove(file)
         self.simcards = simcards
 
-    def set_options(self):      #define algumas opções para o browser "virtual"
-        options = Options()
-        options.headless = True
-        prefs = {"download.default_directory" : os.getcwd()}
-        options.add_experimental_option('excludeSwitches', ['enable-logging'])
-        options.add_experimental_option("prefs",prefs)
-        self.options = options
-
-    def find_by_ICCID(self, ICCID):     # retorna o objeto Sim_Card correspondente ao ICCID inputado
-        for sim in self.simcards:
-            if sim.ICCID == ICCID:
-                return sim
-        raise KeyError(f'O ICCID {ICCID} não corresponde a um número.')
-
-    def __repr__(self):
-        return f'[Arqia] {len(self.simcards)} sim cards.'
 
 class Arqia_Sim_Card(Sim_Card):
-    def __init__(self, operator, row):
+    def __init__(self, operator: Operator, row: dict):
         super().__init__(operator, row['MSISDN'], row['ICCID'], row['Nome Fantasia'])
         self.name = row['Nome Fantasia']
         self.cpf = row['CPF/CNPJ']

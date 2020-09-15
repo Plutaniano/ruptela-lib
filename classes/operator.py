@@ -11,7 +11,7 @@ from .sim_card import Sim_Card
 class Operator:
     all = []
 
-    def __init__(self, name, username, password, host) -> None:
+    def __init__(self, name, username, password, host):
         Operator.all.append(self)
         atexit.register(self._exit_handler)
 
