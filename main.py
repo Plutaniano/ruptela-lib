@@ -1,6 +1,3 @@
-import time
-import os
-import colored
 from serial.tools.list_ports import comports
 
 from arqia import Arqia
