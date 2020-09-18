@@ -24,11 +24,11 @@ class Operator:
         self.create_webdriver()
     
 
-    def login(self):
+    def login(self) -> None:
         # implementar função
         pass
         
-    def create_simcards(self):
+    def sync_simcards(self) -> None:
         # implementar função
         pass
     

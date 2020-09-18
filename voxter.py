@@ -1,16 +1,17 @@
 import time
 import requests
 import json
+from typing import *
 
-from classes.operator import Operator
-from classes.sim_card import Sim_Card
+from .classes.operator import Operator
+from .classes.sim_card import Sim_Card
 
 
 class Voxter(Operator):
-    def __init__(self) -> None:
+    def __init__(self):
         super().__init__('Voxter', 'Ricardo@excelbr.com.br', '102030', 'http://lara.voxter.com.br')
         self.login()
-        self.sync_simcards()
+        self.get_simcards(sync=True)
 
     def login(self) -> None:
         self.driver.get(self.host + '/login.html')
@@ -21,7 +22,7 @@ class Voxter(Operator):
         pw_form.send_keys(self.driver.keys.RETURN)
         time.sleep(8)
 
-    def sync_simcards(self) -> None:
+    def get_simcards(self, sync=False) -> Union[None, List[Sim_Card]]:
         url = 'https://lara.voxter.com.br:8080/simcards/datatables'
 
         userdata = self.driver.execute_script("return window.localStorage.getItem('voxter-userdata');")
@@ -111,19 +112,18 @@ class Voxter(Operator):
 
         r = requests.post(url , headers=headers, data=data)
 
-        sim_cards = []
+        simcards = []
         for data in r.json()['data']:
             sim = Voxter_Sim_Card(self, data)
-            sim_cards.append(sim)
+            simcards.append(sim)
         
-        self.simcards = sim_cards
-            
+        if sync:
+            self.simcards = simcards
+        else:
+            return simcards
         
 class Voxter_Sim_Card(Sim_Card):
     def __init__(self, operator, data):
-        if data['line'] == '9999999999999':
-            data['line'] = None
-
         super().__init__(operator, data['line'], data['iccid'], data['fantasyname'])
         del data['line'], data['iccid'], data['fantasyname']
         for key in data.keys():

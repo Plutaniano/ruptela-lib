@@ -1,7 +1,7 @@
 class Web_User:
     all = []
 
-    def __init__(self, d, locator, owner):
+    def __init__(self, d: dict, locator: 'Locator', owner: 'Client'):
         self.all.append(self)
         self.locator = locator
         self.client = owner
@@ -20,7 +20,7 @@ class Web_User:
         except:
             pass
 
-    def get_api_key(self, locator):
+    def get_api_key(self, locator: 'Locator') -> str:
         api_key_req = locator.session.get(self.link)
         token = api_key_req.history[0].headers['Location']
         token = token.split('=')[1]

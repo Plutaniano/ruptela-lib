@@ -3,3 +3,6 @@
 
 -Arrumar mapa de fundo do plot
 ---status: todo
+
+-remover @classmethods poluindo a biblioteca
+---status: todo

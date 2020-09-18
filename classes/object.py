@@ -1,6 +1,8 @@
+from __future__ import annotations
+from typing import *
 import datetime
 import requests
-import sys
+
 
 
 class Object:
@@ -13,13 +15,14 @@ class Object:
         self.imei = d["imei"]
         self.all.append(self)
 
-    def get_by_name(self, name):
+    @classmethod
+    def get_by_name(self, name) -> Object:
         for i in self.all:
             if i.name == name:
                 return i
         raise Exception('Object not found.')
 
-    def get_interval(self, time_from, time_to=0):
+    def get_interval(self, time_from, time_to=0) -> Union[List[dict], requests.request]:
         time_from = (datetime.datetime.utcnow() - datetime.timedelta(days=time_from)).isoformat()[:-3] + 'Z'
         time_to = (datetime.datetime.utcnow() - datetime.timedelta(days=time_to)).isoformat()[:-3] + 'Z'
         params = {
@@ -45,8 +48,9 @@ class Object:
                     packets.append(i)
             print(f'\n{len(packets)} pacotes.')
             return packets
+
         except Exception as e:
-            print('retornando o ultimo request')
+            print('Ocorreu um erro, retornando o ultimo request para debug.')
             return r
         
 

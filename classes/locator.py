@@ -100,38 +100,5 @@ class Locator():
             raise Exception('Phone not found!')
 
 
-    def create_sim(self, phone, client, apn):
-        print('[ * ] Criando SIM card no Locator.')
-        print(f'--->\t Telefone: {phone}')
-        print(f'--->\t Cliente: {client.company}')
-        params = {
-            'service_pr': 'Excel Produtos Eletronicos',
-            'service_provider': '1407',
-            'clients': str(client.id),
-            'provider': '30',
-            'phone': str(phone),
-            'numbers': '1',
-            'pin': '',
-            'puk': '',
-            'imsi': '',
-            'ip': '',
-            'apn': str(apn),
-            'login': '',
-            'password': '',
-            'create': 'Create'
-        }
-        
-        r = self.session.post(self.HOST + '/administrator/connection/create', params)
-        soup = BeautifulSoup(r.text, 'html.parser')
-        try:
-            string = soup('div', 'error')[0].contents[0]
-            success = False
-        except:
-            string = 'OK!'
-            success = True
-        print(f'--->\t status: {string}\n')
-        return success
-
-
 if __name__ == '__main__':
     l = Locator()

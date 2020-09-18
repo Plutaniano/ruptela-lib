@@ -1,5 +1,9 @@
+from __future__ import annotations
 import requests
 from typing import *
+from datetime import datetime, timedelta
+
+from bs4 import BeautifulSoup
 
 from .web_user import Web_User
 from .object import Object
@@ -7,7 +11,7 @@ from .object import Object
 class Client:
     all = []
 
-    def __init__(self, d: dict, locator):
+    def __init__(self, d: dict, locator: 'Locator'):
         self.index = len(Client.all)
         self.all.append(self)
         self.locator = locator
@@ -20,13 +24,13 @@ class Client:
         self.objects = []
 
         self.get_web_users(sync=True)
-        self.create_objects()
+        self.get_objects(sync=True)
         print(f'--->\t\t \'{self.company}\' criado com {len(self.objects)} objetos.')
 
     def __repr__(self):
         return f'[Client] <company:{self.company} objects:{len(self.objects)}>'
 
-    def get_web_users(self, sync=False) -> Union[None, List[Web_User]]:
+    def get_web_users(self, sync: bool = False) -> Union[List[Web_User], None]:
         headers = {'X-Requested-With': 'XMLHttpRequest'}
         web_req = self.locator.session.get(self.locator.HOST + '/administrator/webusers/getList', headers=headers)
         web_users = []
@@ -40,7 +44,7 @@ class Client:
         else:
             return web_users
     
-    def create_objects(self):
+    def get_objects(self, sync: bool = False) -> Union[None, List[Object]]:
         params={
             "version": "1",
             "api_key": self.api_key
@@ -49,9 +53,12 @@ class Client:
         objs = []
         for obj in objs_req.json():
             objs.append(Object(obj, self))
-        self.objects = objs
+        if sync:
+            self.objects = objs
+        else:
+            return objs
 
-    def find_by_name(self, name):
+    def find_by_name(self, name: str) -> Object:
         for i in self.objects:
             if i.name == name:
                 return i
@@ -63,7 +70,6 @@ class Client:
         imei,
         hardware,
         phone,
-        client,
         description='.',
         drivers_phone='',
         serial='',
@@ -79,16 +85,19 @@ class Client:
         tppid='',
         ppid='2911',
         installer='',
-        username='',
-        password='',
+        fm_username='',
+        fm_password='',
+        apn='voxter.br',
+        apn_login='algar',
+        apn_password='algar'
         ):
         try:
-            phone_id = self._get_phone_id(phone, client)
+            phone_id = self.locator._get_phone_id(phone)
         except:
-            self.create_sim(phone, client)
-            phone_id = self._get_phone_id(phone)
+            self.create_sim(phone, apn, apn_login, apn_password)
+            phone_id = self.locator._get_phone_id(phone)
         params = {
-            'client': str(client.id),               # Client ID - 51879=Colorado
+            'client': str(self.id),               # Client ID - 51879=Colorado
             'object': str(name),                    # Object Name
             'type': 'vehicle',                      # vehicle or trailer
             'state': '1',                           # State: 1-'' 2-'New/not installed' 3-Testing 4-For Repair 5-Uninstalled
@@ -126,13 +135,13 @@ class Client:
             'mask': '',                             # Mask
             'extra_mask': '',                       # Extra mask
             'pnd_type': '0',                        # PND Type
-            'username': str(username),              # FM Login
-            'password': str(password),              # FM Password
+            'username': str(fm_username),           # FM Login
+            'password': str(fm_password),           # FM Password
             'create': 'Create',                     # Create
         }
         print(f'[ * ] Criando objeto no Locator.')
-        print(f'--->\t Nome: {str(name)}, cliente: {client.company}')
-        r = self.session.post(self.HOST + '/administrator/objects/create', params)
+        print(f'--->\t Nome: {str(name)}, cliente: {self.company}')
+        r = self.locator.session.post(self.locator.HOST + '/administrator/objects/create', params)
         soup = BeautifulSoup(r.text, 'html.parser')
         try:
             string = soup('div', 'error')[0].contents
@@ -147,22 +156,46 @@ class Client:
         if string != 'OK!':
             print('--->\t Algo de errado ocorreu, enviando informações sobre erro para a engenharia.')
         return success
+    
+    def create_sim(self, phone, apn, login='', password=''):
+        print('[ * ] Criando SIM card no Locator.')
+        print(f'--->\t Telefone: {phone}')
+        print(f'--->\t Cliente: {self.company}')
+        params = {
+            'service_pr': 'Excel Produtos Eletronicos',
+            'service_provider': '1407',
+            'clients': str(self.id),
+            'provider': '30',
+            'phone': str(phone),
+            'numbers': '1',
+            'pin': '',
+            'puk': '',
+            'imsi': '',
+            'ip': '',
+            'apn': str(apn),
+            'login': str(login),
+            'password': str(password),
+            'create': 'Create'
+        }
+        
+        r = self.locator.session.post(self.locator.HOST + '/administrator/connection/create', params)
+        soup = BeautifulSoup(r.text, 'html.parser')
+        try:
+            string = soup('div', 'error')[0].contents[0]
+            success = False
+        except:
+            string = 'OK!'
+            success = True
+        print(f'--->\t status: {string}\n')
+        return success
 
 
 
     @property
-    def api_key(self):
+    def api_key(self) -> str:
         for web_user in self.web_users:
             try:
                 return web_user.api_key
             except:
                 pass
         raise Exception('Não foi possível encontrar uma api key devido a falta de web users ou falta de api nos web users.')        
-
-    @classmethod
-    def select_client(cls):
-        for client in cls.all:
-            print(f'[{client.index}] {client.company}')
-        print('\n\n')
-        index = int(input('Selecione o cliente que deseja atribuir as modificações: '))
-        return cls.all[index]

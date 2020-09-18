@@ -58,12 +58,3 @@ class Hardware(metaclass=MetaHardware):
     @classmethod
     def init(cls, locator) -> None:
         MetaHardware.init(locator)
-
-    # TO REMOVE
-    @classmethod
-    def select_hardware(cls) -> Hardware:
-        for i, hw in enumerate(cls.all):
-            print(f'[ID:{i}] {hw.name}')
-        print('\n\n')
-        index = int(input('Selecione o ID do hardware a ser utilizado: '))
-        return cls.all[index]
