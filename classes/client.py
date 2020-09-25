@@ -8,10 +8,11 @@ from bs4 import BeautifulSoup
 from .web_user import Web_User
 from .object import Object
 
+
 class Client:
     all = []
 
-    def __init__(self, d: dict, locator: 'Locator'):
+    def __init__(self, d: dict, locator: 'Locator') -> None:
         self.index = len(Client.all)
         self.all.append(self)
         self.locator = locator
@@ -22,9 +23,12 @@ class Client:
         self.address = d['address']
         self.email = d['email']
         self.objects = []
+        self.web_users = []
 
-        self.get_web_users(sync=True)
-        self.get_objects(sync=True)
+        if locator.is_fast == False:
+            self.get_web_users(sync=True)
+            self.get_objects(sync=True)
+
         print(f'--->\t\t \'{self.company}\' criado com {len(self.objects)} objetos.')
 
     def __repr__(self):
@@ -68,8 +72,8 @@ class Client:
         self,
         name,
         imei,
-        hardware,
-        phone,
+        hardware: 'Hardware',
+        sim_card: 'Sim_Card',
         description='.',
         drivers_phone='',
         serial='',
@@ -86,16 +90,13 @@ class Client:
         ppid='2911',
         installer='',
         fm_username='',
-        fm_password='',
-        apn='voxter.br',
-        apn_login='algar',
-        apn_password='algar'
+        fm_password=''
         ):
         try:
-            phone_id = self.locator._get_phone_id(phone)
+            phone_id = self.locator._get_phone_id(sim_card)
         except:
-            self.create_sim(phone, apn, apn_login, apn_password)
-            phone_id = self.locator._get_phone_id(phone)
+            self.create_sim(sim_card)
+            phone_id = self.locator._get_phone_id(sim_card)
         params = {
             'client': str(self.id),               # Client ID - 51879=Colorado
             'object': str(name),                    # Object Name
@@ -143,38 +144,34 @@ class Client:
         print(f'--->\t Nome: {str(name)}, cliente: {self.company}')
         r = self.locator.session.post(self.locator.HOST + '/administrator/objects/create', params)
         soup = BeautifulSoup(r.text, 'html.parser')
-        try:
-            string = soup('div', 'error')[0].contents
-            success = False
-        except:
-            string = soup('span', {'class': 'done'})[0].text
-            if string == 'Done':
-                string = 'OK!'
-            success = True
+        error_strings = [i.text for i in soup('div', 'error')]
 
-        print(f'--->\t status: {string}\n')
-        if string != 'OK!':
-            print('--->\t Algo de errado ocorreu, enviando informações sobre erro para a engenharia.')
-        return success
+        if len(error_strings) > 0:
+            raise Exception('\n'.join(error_strings))
+
+        string = soup('span', {'class': 'done'})[0].text
+        if string == 'Done':
+            string = 'OK!'
+        return string
     
-    def create_sim(self, phone, apn, login='', password=''):
+    def create_sim(self, sim_card: 'Sim_Card'):
         print('[ * ] Criando SIM card no Locator.')
-        print(f'--->\t Telefone: {phone}')
+        print(f'--->\t Telefone: {sim_card.line}')
         print(f'--->\t Cliente: {self.company}')
         params = {
             'service_pr': 'Excel Produtos Eletronicos',
             'service_provider': '1407',
             'clients': str(self.id),
             'provider': '30',
-            'phone': str(phone),
+            'phone': str(sim_card.line),
             'numbers': '1',
             'pin': '',
             'puk': '',
             'imsi': '',
             'ip': '',
-            'apn': str(apn),
-            'login': str(login),
-            'password': str(password),
+            'apn': str(sim_card.operator.apn[0]),
+            'login': str(sim_card.operator.apn[1]),
+            'password': str(sim_card.operator.apn[2]),
             'create': 'Create'
         }
         

@@ -11,7 +11,7 @@ from .sim_card import Sim_Card
 class Operator:
     all = []
 
-    def __init__(self, name, username, password, host):
+    def __init__(self, name: str, username: str, password: str, host: str, apn: tuple):
         Operator.all.append(self)
         atexit.register(self._exit_handler)
 
@@ -19,6 +19,7 @@ class Operator:
         self.username = username
         self.password = password
         self.host = host
+        self.apn = apn
 
         self.set_options()
         self.create_webdriver()

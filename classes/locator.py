@@ -1,25 +1,24 @@
 import requests
 from typing import *
 
-from bs4 import BeautifulSoup
-
 from .client import Client
-from .hardware import Hardware, MetaHardware
+from .hardware import Hardware
+from .sim_card import Sim_Card
 
-
-# Locator
 
 class Locator():
     HOST = 'https://track.ruptela.lt'
     API_HOST = 'http://api.fm-track.com'
 
-    def __init__(self, username='ExcelProdutos', password='sLzN58LZ'):
+    def __init__(self, username='ExcelProdutos', password='sLzN58LZ', fast=False):
         self.username = username
         self.password = password
+        self.is_fast = fast
+
         if self.login():
             print('--->\t Coletando informações, por favor aguarde...')
             self.get_clients(sync=True)
-            MetaHardware.init(self)
+            Hardware.init(self)
             self.hardwares = Hardware.all
 
 
@@ -39,7 +38,7 @@ class Locator():
             raise Exception('Não foi possível logar no Locator.')
         return True
     
-    def get_clients(self, sync=False) -> Union[None, List[Client]]:
+    def get_clients(self, sync: bool = False) -> Union[None, List[Client]]:
         headers = {
             'Connection': 'keep-alive',
             'Accept': 'application/javascript, application/json',
@@ -79,8 +78,12 @@ class Locator():
         raise KeyError(f'Não foi possível encontrar um client com o nome \'{key}\'')
 
 
-    def _get_phone_id(self, phone) -> str:
-        phone = str(phone)
+    def _get_phone_id(self, sim_card) -> str:
+        if isinstance(sim_card, Sim_Card):
+            line = sim_card.line
+        else:
+            line = sim_card
+
         headers = {
             'Connection': 'keep-alive',
             'Accept': 'application/javascript, application/json',
@@ -94,7 +97,7 @@ class Locator():
         }
         r = self.session.get(self.HOST + '/administrator/connection/getList', headers=headers)
         for row in r.json():
-            if row['phone'] == phone:
+            if row['phone'] == line:
                 return row['id'].strip()
         else:
             raise Exception('Phone not found!')
