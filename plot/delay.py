@@ -1,36 +1,31 @@
 import matplotlib
 import matplotlib.pyplot as plt
-from .classes import *
+from ruptela import Locator
 
-create_all_objects()
 
 timefrom = float(input('time from? '))
 
-for i in Object.all:
-    i.packets = [Packet(p, i) for p in i.get_interval(timefrom)]
-    print(f'[{i.name}] {len(i.packets)} pacotes')
-    i.dates = []
-    i.delays = []
-    if len(i.packets) == 0:
-        print('descartado')
-        continue
-    for p in range(1,len(i.packets)):
-        packetdatetime = i.packets[p].datetime
-        packetdelay = (i.packets[p].datetime - i.packets[p-1].datetime).total_seconds()
-        i.dates.append(packetdatetime)
-        i.delays.append(packetdelay)
 
-
-objs_to_be_plotted = []
-for i in Object.all:
-    if len(i.delays) > 0:
-        objs_to_be_plotted.append(i)
 
 
 hfmt = matplotlib.dates.DateFormatter('%Y-%m-%d\n%H:%M:%S')
 
 
-def plot(objs = objs_to_be_plotted, yscale='linear', maxy=4000):
+def plot(objs, yscale='linear', maxy=4000):
+    for i in objs:
+        i.packets = [p for p in i.get_interval(timefrom)]
+        print(f'[{i.name}] {len(i.packets)} pacotes')
+        i.dates = []
+        i.delays = []
+        if len(i.packets) == 0:
+            print('descartado')
+            continue
+        for p in range(1, len(i.packets)):
+            packetdatetime = i.packets[p].datetime
+            packetdelay = (i.packets[p].datetime - i.packets[p-1].datetime).total_seconds()
+            i.dates.append(packetdatetime)
+            i.delays.append(packetdelay)
+
     fig = plt.figure()
     all_graphs = []
     for n, i in enumerate(objs):
@@ -64,4 +59,5 @@ def plot(objs = objs_to_be_plotted, yscale='linear', maxy=4000):
     plt.grid()
     plt.show()
 
-plot()
+if __name__ == '__main__':
+    l = Locator()

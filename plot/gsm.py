@@ -1,12 +1,7 @@
-import datetime as dt
 import requests
-from math import ceil, sqrt
 import matplotlib.pyplot as plt
-from classes import Locator
-from arqia import Arqia
-from classes import Object
+from ..classes import Object
 from collections import Counter
-from classes.object import Object
 
 MAPQUEST_API_KEY = 'Vo9PUqFKfgB7VmmRf1gYjAvMS8Ii0KPw'
 
@@ -83,7 +78,3 @@ def get_map(xlim, ylim, size='1000,1000'):
     with open('map.png','wb') as f:
         f.write(map_req.content)
     return map_req.content
-
-if __name__ == '__main__':
-    l = Locator()
-    

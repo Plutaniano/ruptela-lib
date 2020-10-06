@@ -33,8 +33,12 @@ class Config_File:
             param_count += i.param_count
         return f'[cfg file] <data packets:{len(self.data_packets)} params: {param_count}>'
 
-    def write(self, port, baud=115200, timeout=10):
-        s = serial.Serial(port, baud, timeout=timeout)
+    def write(self, port='', baud=115200, timeout=10):
+        if isinstance(port, serial.Serial):
+            s = port
+        else:
+            s = serial.Serial(port, baud, timeout=timeout)
+            
         print('--->\t Iniciando comunicação com o dispositivo.')
         s.write(b'#cfg_reset@\r\n')
         time.sleep(0.01)

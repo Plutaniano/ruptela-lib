@@ -13,7 +13,6 @@ class Operator:
 
     def __init__(self, name: str, username: str, password: str, host: str, apn: tuple):
         Operator.all.append(self)
-        atexit.register(self._exit_handler)
 
         self.name = name
         self.username = username
@@ -61,5 +60,6 @@ class Operator:
     def __repr__(self):
         return f'[{self.name}] {len(self.simcards)} sim cards.'
 
+    @atexit.register
     def _exit_handler(self):
         self.driver.quit()
