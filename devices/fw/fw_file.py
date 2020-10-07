@@ -1,7 +1,7 @@
 import serial
 import progressbar
 import re
-from packaging import version
+from packaging import version as vers
 import requests
 import os
 from bs4 import BeautifulSoup
@@ -10,6 +10,7 @@ from .fw_data_packet import FW_Data_Packet
 
 class FW_File:
     def __init__(self, device='Eco4S', path=None):
+        self.progress = 'stopped'
         self.device = device
         if path == None:
             print('--->\t Buscando firmware mais recente.')
@@ -27,41 +28,7 @@ class FW_File:
     def __repr__(self):
         return f'[FW_File] <version: {self.version}, data_packets:{len(self.data_packets)}>'
 
-    def write(self, port, baud=115200, timeout=15):
-        if isinstance(port, serial.Serial):
-            s = port
-        else:
-            s = serial.Serial(port, baud, timeout=timeout)
-        print('--->\t Iniciando comunicação com o dispositivo.')
-        s.write(b'|FU_STRT*\r\n')
-
-        expected = b'*FU_OK|\r\n'
-        incoming = s.read(len(expected))
-        if incoming != expected:
-            raise ValueError(f'valor lido: {incoming}, esperado: {expected}')
-        print('--->\t Atualização iniciada.')
-        
-        self.progress = 0
-        for p in progressbar.progressbar(self.data_packets):
-            self.progress += 100/len(self.data_packets)
-            s.write(b'|FU_PCK*' + p.format() + b'\r\n')
-            expected = b'*FU_OK|' + p.idf() + b'\r\n'
-            incoming = s.read(len(expected))
-            if incoming != expected:
-                s.close()
-                raise ValueError(f'valor lido: {incoming}, esperado: {expected}')
-        
-        print('--->\t Escrevendo firmware...')
-        s.write(b'|FU_WRITE*\r\n')
-        expected = b'*FU_OK|\r\n'
-        incoming = s.read(len(expected))
-
-        if incoming != expected:
-            raise ValueError('Erro escrevendo firmware. Esperado: {expected}, recebido: {incoming}')
-        else:
-            print('--->\t Sucesso.')
-        s.write(b'|FU_END*')
-        return 0
+    
     
     def _get_most_recent(self):
         links = {
@@ -76,7 +43,7 @@ class FW_File:
         s = BeautifulSoup(r.content, features="html.parser")
         regex = re.compile('FM.*\..*4')
         tag = s.find('a', text=regex)
-        self.version = version.parse(tag.text[-17:-6])
+        self.version = vers.parse(tag.text[-17:-6])
         print(f'--->\t Arquivo: {tag.text}')
         
         r = requests.get('https://doc.ruptela.lt' + tag['href'], allow_redirects=True)
