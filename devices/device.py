@@ -24,10 +24,7 @@ class Device:
         self.hardware = hardware
         self.imei = imei
         self._fw_file = ''
-        try:
-            self.fw_file = Device.firmwares[self.device]
-        except KeyError:
-            pass
+        self.status = 'Dispositivo conectado.'
 
 
     @property
@@ -46,31 +43,29 @@ class Device:
         if self.fw_version < self.fw_file.version:
             return self._write_fw()
         else:
+            self.fwstatus = 'O dispositivo já está na última versão disponível.'
             print('O dispositivo já está na última versão disponível.')
             return 0
 
-    def _write_fw(self, timeout=15) -> bool:
+    def _write_fw(self) -> bool:
         with self.ser:
-            print('--->\t Iniciando comunicação com o dispositivo.')
             self.ser.write(b'|FU_STRT*\r\n')
-
             expected = b'*FU_OK|\r\n'
             incoming = self.ser.read(len(expected))
             if incoming != expected:
                 raise ValueError(f'valor lido: {incoming}, esperado: {expected}')
             print('--->\t Atualização iniciada.')
             
-            self.progress = 0
+            self.fwstatus = '0%'
             for p in progressbar.progressbar(self.fw_file.data_packets):
-                self.progress += 100/len(self.fw_file.data_packets)
+                self.fwstatus += 100//len(self.fw_file.data_packets)
                 self.ser.write(b'|FU_PCK*' + p.format() + b'\r\n')
                 expected = b'*FU_OK|' + p.idf() + b'\r\n'
                 incoming = self.ser.read(len(expected))
                 if incoming != expected:
                     raise ValueError(f'valor lido: {incoming}, esperado: {expected}')
 
-            self.progress = 'done'
-            
+
             print('--->\t Escrevendo firmware...')
             self.ser.write(b'|FU_WRITE*\r\n')
             expected = b'*FU_OK|\r\n'
@@ -79,28 +74,31 @@ class Device:
             if incoming != expected:
                 raise ValueError('Erro escrevendo firmware. Esperado: {expected}, recebido: {incoming}')
             else:
+                self.fwstatus = 'Firmware gravado com sucesso.'
                 print('--->\t Sucesso.')
             self.ser.write(b'|FU_END*')
             return 0
     
-    def send_config(self, cfg) -> bool:
+    def send_config(self, cfg: Config_File) -> bool:
         return self._write_config(cfg)
     
     def _write_config(self, cfg: Config_File) -> bool:
         with self.ser:
             print('--->\t Iniciando comunicação com o dispositivo.')
             self.ser.write(b'#cfg_reset@\r\n')
-            time.sleep(0.01)
+            time.sleep(0.1)
             self.ser.write(b'#cfg_start@\r\n')
+            time.sleep(0.1)
 
             expected_msg = b'@cfg_sts#10\r\n'
             msg_received = self.ser.read(len(expected_msg))
-
             if msg_received != expected_msg and msg_received != b'@cfg_sts#01\r\n':
                 raise ValueError(f'valor lido: {msg_received}, esperado {expected_msg}')
 
             print('--->\t Upload inicializado.')
+            self.cfgstatus = 0
             for p in progressbar.progressbar(cfg.data_packets):
+                self.cfgstatus += 100//len(cfg.data_packets)
                 self.ser.write(b'#cfg_send@' + p.format() + b'*\r\n')
 
                 expected_msg = b'@cfg_sts#1' + p.idf() + b'\r\n'
@@ -109,6 +107,7 @@ class Device:
                     raise ValueError(f'[ERR] erro enviando data_packet. recebido:{msg_received}, esperado: {expected_msg}')
             
             print('--->\t escrevendo config.')
+            self.cfgstatus = 'Escrevendo config.'
             self.ser.write(b'#cfg_write@\r\n')
 
             expected_msg = b'@cfg_sts#10'
@@ -123,11 +122,13 @@ class Device:
                 if msg_received != expected_msg:
                     raise ValueError(f'[ERR] erro na resposta do pedido de escrita. msg:{msg_received}')
                 else:
+                    self.cfgstatus = 'Config escrita com sucesso.'
+                    del self.status
                     print('--->\t Sucesso.')
                     time.sleep(1)
             return 0
 
-    def is_alive(self):
+    def is_connected(self):
         if self.ser.port in [i.device for i in comports()]:
             return True
         return False
