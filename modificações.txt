@@ -1,8 +1,0 @@
--Adicionar check para verificar se o serial number escaneado é o da Excel e não o da Ruptela.
----status: implementado erro de "valor nao-numerico"
-
--Arrumar mapa de fundo do plot
----status: todo
-
--remover @classmethods poluindo a biblioteca
----status: todo

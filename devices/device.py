@@ -1,19 +1,24 @@
-from packaging import version
-import progressbar
-
 from typing import *
+from packaging import version
 import time
 import re
+import logging
 
+import progressbar
 import serial
-from .cfg import Config_File
-from ruptela.classes.errors import *
-from serial.serialutil import SerialException
 from serial.tools.list_ports import comports
-from ruptela.devices.fw import FW_File
 
+from .cfg import Config_File
+from .fw import FW_File
+from ..classes.errors import *
+
+import logging
+logger = logging.getLogger(__name__)
 
 class Device:
+    """
+    Base class for Ruptela devices.
+    """
     firmwares = {}
     
     def __init__(self, comport, bootloader, fw_version, hardware, imei):
@@ -28,33 +33,47 @@ class Device:
 
 
     @property
-    def fw_file(self):
+    def fw_file(self) -> FW_File:
+        """
+        Property that will return the most recent firmware file avaiable.
+        First it will check if the firmware has been already downloaded and
+        saved in Device.firmwares. If it's already in Device.firmwares, it will
+        return it, otherwise, it will download it, save it in Device.firmwares and
+        then return it.
+        """
         if self._fw_file == '':
             try:
                 self._fw_file = Device.firmwares[self.device]
             except KeyError:
                 Device.firmwares[self.device] = FW_File(self.device)
                 self._fw_file = Device.firmwares[self.device]
-                return self._fw_file
-        else:
-            return self._fw_file
+        return self._fw_file
 
     def update(self) -> bool:
+        """
+        Method for updating the device. Will check if the firmware currently
+        in the device is more recent or equal to the most recent firmware avaiable
+        before actually writing anything to the device.
+        """
         if self.fw_version < self.fw_file.version:
             return self._write_fw()
         else:
             self.fwstatus = 'O dispositivo já está na última versão disponível.'
-            print('O dispositivo já está na última versão disponível.')
+            logger.info('O dispositivo já está na última versão disponível.')
             return 0
 
     def _write_fw(self) -> bool:
+        """
+        Method for writing the firmware bytes to the device. Performs no checks.
+        If you want to update your device, use .update() instead.
+        """
         with self.ser:
             self.ser.write(b'|FU_STRT*\r\n')
             expected = b'*FU_OK|\r\n'
-            incoming = self.ser.read(len(expected))
+            incoming = self.ser.readline()
             if incoming != expected:
                 raise ValueError(f'valor lido: {incoming}, esperado: {expected}')
-            print('--->\t Atualização iniciada.')
+            logger.info('Atualização iniciada.')
             
             self.fwstatus = '0%'
             for p in progressbar.progressbar(self.fw_file.data_packets):
@@ -66,7 +85,7 @@ class Device:
                     raise ValueError(f'valor lido: {incoming}, esperado: {expected}')
 
 
-            print('--->\t Escrevendo firmware...')
+            logger.info('Escrevendo firmware...')
             self.ser.write(b'|FU_WRITE*\r\n')
             expected = b'*FU_OK|\r\n'
             incoming = self.ser.read(len(expected))
@@ -75,16 +94,24 @@ class Device:
                 raise ValueError('Erro escrevendo firmware. Esperado: {expected}, recebido: {incoming}')
             else:
                 self.fwstatus = 'Firmware gravado com sucesso.'
-                print('--->\t Sucesso.')
+                logger.info('Sucesso.')
             self.ser.write(b'|FU_END*')
             return 0
     
     def send_config(self, cfg: Config_File) -> bool:
+        """
+        Method for sending a Config_File to the device. No checks before
+        starting to write bytes to the device.
+        """
         return self._write_config(cfg)
     
     def _write_config(self, cfg: Config_File) -> bool:
+        """
+        Method for writing the Config_File bytes to the device. Performs no checks.
+        If you want to update your config, use .send_config() instead.
+        """
         with self.ser:
-            print('--->\t Iniciando comunicação com o dispositivo.')
+            logger.info('Iniciando comunicação com o dispositivo.')
             self.ser.write(b'#cfg_reset@\r\n')
             time.sleep(0.1)
             self.ser.write(b'#cfg_start@\r\n')
@@ -95,7 +122,7 @@ class Device:
             if msg_received != expected_msg and msg_received != b'@cfg_sts#01\r\n':
                 raise ValueError(f'valor lido: {msg_received}, esperado {expected_msg}')
 
-            print('--->\t Upload inicializado.')
+            logger.info('Upload inicializado.')
             self.cfgstatus = 0
             for p in progressbar.progressbar(cfg.data_packets):
                 self.cfgstatus += 100//len(cfg.data_packets)
@@ -104,15 +131,17 @@ class Device:
                 expected_msg = b'@cfg_sts#1' + p.idf() + b'\r\n'
                 msg_received = self.ser.read(len(expected_msg))
                 if msg_received != expected_msg:
-                    raise ValueError(f'[ERR] erro enviando data_packet. recebido:{msg_received}, esperado: {expected_msg}')
+                    logger.error(f'Erro enviando data_packet. recebido:{msg_received}, esperado: {expected_msg}')
+                    raise ValueError(f'Erro enviando data_packet. recebido:{msg_received}, esperado: {expected_msg}')
             
-            print('--->\t escrevendo config.')
+            logger.info('Escrevendo config.')
             self.cfgstatus = 'Escrevendo config.'
             self.ser.write(b'#cfg_write@\r\n')
 
             expected_msg = b'@cfg_sts#10'
             msg_received = self.ser.read(len(expected_msg))
             if msg_received != expected_msg:
+                logger.error(f'Erro escrevendo config. msg: {msg_received}.')
                 raise ValueError(f'[ERR] erro escrevendo config. msg:{msg_received}')
             else:
                 self.ser.write(b'#cfg_end@\r\n')
@@ -124,7 +153,7 @@ class Device:
                 else:
                     self.cfgstatus = 'Config escrita com sucesso.'
                     del self.status
-                    print('--->\t Sucesso.')
+                    logger.info('Sucesso.')
                     time.sleep(1)
             return 0
 
@@ -135,20 +164,45 @@ class Device:
 
 
 class Eco4S(Device):
-    """FM-Eco4 light+ S"""
+    """
+    Class for the FM-Eco4 light+ S
+    """
     def __init__(self, comport, bootloader, fw_version, hardware, imei) -> None:
         self.device = 'Eco4S'
+        self.hardwarelist = {
+            'id': '157',
+            'name': 'FM-Eco4 S',
+            'description': 'FM-Eco4 S',
+            'hw_version': 'FM-Eco4 S',
+            'soft_id': '356',
+            'soft_version': 'FM-Eco4 S'
+        }
         super().__init__(comport, bootloader, fw_version, hardware, imei)
 
 
 class Eco4light(Device):
-    """FM-Eco4 light+ S"""
+    """
+    Class for the FM-Eco4 light+ S
+    """
     def __init__(self, comport, bootloader, fw_version, hardware, imei) -> None:
         self.device = 'Eco4light'
+        self.hardwarelist = {
+            'id': '138',
+            'name': 'FM-Eco4 light',
+            'description': 'FM-Eco4 light',
+            'hw_version': 'FM-Eco4 light',
+            'soft_id': '315',
+            'soft_version': 'FM-Eco4 light'
+        }
         super().__init__(comport, bootloader, fw_version, hardware, imei)
 
 
-def DeviceFactory(comport=''):
+def DeviceFactory(comport='') -> Union[Eco4light, Eco4S]:
+    """
+    Function for creating devices. Will automatically define which device
+    to create based on response from said device to b"?version\\r\\n" sent on
+    the serial port.
+    """
     com_ports = [i.device for i in comports()]
 
     if comport == '' and len(com_ports) == 1:
@@ -170,12 +224,14 @@ def DeviceFactory(comport=''):
         try:
             with serial.Serial(port_info.device, 115200, timeout=1) as ser:
                 
+                # b'?version\r\n'
                 ser.write(b'?version\r\n')
                 r = ser.read(100).decode('utf-8')
                 bootloader = re.findall('0x[0-9a-fA-F]{2}', r)
                 fw_version = re.findall('[\d\d\.]{11}', r)[0]
                 hardware = re.findall('\w+-\w+-\w+', r)[0]
 
+                # b'?imei\r\n'
                 ser.write(b'?imei\r\n')
                 r = ser.readline().decode('utf-8')
                 imei = re.findall('[0-9]+', r)[0]

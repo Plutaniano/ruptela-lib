@@ -8,7 +8,7 @@ import requests
 class Object:
     all = []
 
-    def __init__(self, d, owner):
+    def __init__(self, d, owner) -> None:
         self.client = owner
         self.id = d["id"]
         self.name = d["name"]
@@ -17,14 +17,21 @@ class Object:
 
     @classmethod
     def get_by_name(self, name) -> Object:
+        """
+        Class method for finding objects by name.
+        """
         for i in self.all:
             if i.name == name:
                 return i
         raise Exception('Object not found.')
 
     def get_interval(self, time_from, time_to=0) -> Union[List[dict], requests.request]:
-        time_from = (datetime.datetime.utcnow() - datetime.timedelta(days=time_from)).isoformat()[:-3] + 'Z'
-        time_to = (datetime.datetime.utcnow() - datetime.timedelta(days=time_to)).isoformat()[:-3] + 'Z'
+        """
+        Method for getting data from a vehicle from a specified time interval.
+        """
+        now = datetime.datetime.utcnow()
+        time_from = (now - datetime.timedelta(days=time_from)).isoformat()[:-3] + 'Z'
+        time_to = (now- datetime.timedelta(days=time_to)).isoformat()[:-3] + 'Z'
         params = {
             'version': 2,
             'api_key': self.client.web_users[0].api_key,

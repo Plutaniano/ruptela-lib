@@ -7,9 +7,21 @@ from bs4 import BeautifulSoup
 
 from .web_user import Web_User
 from .object import Object
+from .sim_card import Sim_Card
 
+import logging
+logger = logging.getLogger(__name__)
 
 class Client:
+    """
+    Class for storing data related to locator clients.
+    
+    ...
+
+    Attributes:
+    
+
+    """
     all = []
 
     def __init__(self, d: dict, locator: 'Locator') -> None:
@@ -29,10 +41,10 @@ class Client:
             self.get_web_users(sync=True)
             self.get_objects(sync=True)
 
-        print(f'--->\t\t \'{self.company}\' criado com {len(self.objects)} objetos.')
+        logger.info(f'\'{self.company}\' criado com {len(self.objects)} objetos.')
 
-    def __repr__(self):
-        return f'[Client] <company:{self.company} objects:{len(self.objects)}>'
+    def __repr__(self) -> str:
+        return f'[Client] <company:\'{self.company}\', objects:{len(self.objects)}>'
 
     def get_web_users(self, sync: bool = False) -> Union[List[Web_User], None]:
         headers = {'X-Requested-With': 'XMLHttpRequest'}
@@ -48,7 +60,7 @@ class Client:
         else:
             return web_users
     
-    def get_objects(self, sync: bool = False) -> Union[None, List[Object]]:
+    def get_objects(self, sync: bool = False) -> Union[List[Object], None]:
         params={
             "version": "1",
             "api_key": self.api_key
@@ -68,65 +80,79 @@ class Client:
                 return i
         raise NameError('Não foi possível encontrar objeto com o nome especificado.')
 
-    def create_new_object(
-        self,
-        name,
-        imei,
-        hardware: 'Hardware',
-        sim_card: 'Sim_Card',
-        description='.',
-        drivers_phone='',
-        serial='',
-        template_id='2531',
-        delay_hour='00',
-        delay_min='30',
-        make='',
-        model='',
-        object_color='',
-        notes='',
-        vin='',
-        vehicle_type='UNSPECIFIED',
-        tppid='',
-        ppid='2911',
-        installer='',
-        fm_username='',
-        fm_password=''
-        ):
+    def create_new_object(self, name: str, **kwargs: str) -> str:
+        """
+        
+        """
+        d = {
+        'hardware': '',
+        'description': '.',
+        'drivers_phone': '',
+        'serial': '',
+        'template_id': '2531', # GTFrota Ecolight template
+        'delay_hour': '00',
+        'delay_min': '30',
+        'make': '',
+        'model': '',
+        'object_color': '',
+        'notes': '',
+        'vin': '',
+        'vehicle_type': 'UNSPECIFIED',
+        'tppid': '',
+        'ppid': '2911',
+        'installer': '',
+        'fm_username': '',
+        'fm_password': ''            
+        }
+        d.update(kwargs)
+
+        if 'device' in d.keys():
+            d['imei'] = d['device'].imei
+            d['hardware'] = d['device'].hardwarelist['name']
+            d['hardware_id'] = d['device'].hardwarelist['id']
+            d['soft_id'] = d['device'].hardwarelist['soft_id']
+
         try:
-            phone_id = self.locator._get_phone_id(sim_card)
+            assert d['name'] != '' and isinstance(d['name'], str)
+        except AssertionError:
+            raise KeyError('Invalid name')
+
+
+        try:
+            phone_id = self.locator._get_phone_id(d['sim_card'])
         except:
-            self.create_sim(sim_card)
-            phone_id = self.locator._get_phone_id(sim_card)
+            self.create_sim(d['sim_card'])
+            phone_id = self.locator._get_phone_id(d['sim_card'])
         params = {
-            'client': str(self.id),               # Client ID - 51879=Colorado
-            'object': str(name),                    # Object Name
-            'type': 'vehicle',                      # vehicle or trailer
-            'state': '1',                           # State: 1-'' 2-'New/not installed' 3-Testing 4-For Repair 5-Uninstalled
-            'tt_version': 'TT2',                    # TT2
-            'description': str(description),        # Obj Description
-            'connection': str(phone_id),            # Phone Number
-            'phone': str(drivers_phone),            # Drivers phone
-            'serial': str(serial),                  # Serial Number
-            'imei': str(imei),                      # IMEI
-            'hardware': str(hardware),              # Hardware - ex: 'FM-Eco4 S'
-            'hardware_id': hardware.id,             # Hardware ID - FM Eco4 S=157
-            'soft': hardware.soft_id,               # Soft ID
-            'template_id': str(template_id),        # Template ID - Default 2531 para "GTFrota Eco Light"
-            'delay_hour': str(delay_hour),          # Delay hour
-            'delay_min': str(delay_min),            # Delay minutes
-            'make': str(make),                      # Make
-            'model': str(model),                    # Model
-            'object_color': str(object_color),      # Color
-            'admin_notes': str(notes),              # Notes
-            'vin': str(vin),                        # VIN
-            'vehicle_type': str(vehicle_type),      # Vehicle Type - UNSPECIFIED or PASSENGER
-            'temp_payment_plan_id': str(tppid),     # Temporary Payment Plan
+            'client': str(self.id),                      # Client ID - 51879=Colorado
+            'object': str(name),                         # Object Name
+            'type': 'vehicle',                           # vehicle or trailer
+            'state': '1',                                # State: 1-'' 2-'New/not installed' 3-Testing 4-For Repair 5-Uninstalled
+            'tt_version': 'TT2',                         # TT2
+            'description': str(d['description']),        # Obj Description
+            'connection': str(phone_id),                 # Phone Number
+            'phone': str(d['drivers_phone']),            # Drivers phone
+            'serial': str(d['serial']),                  # Serial Number
+            'imei': str(d['imei']),                      # IMEI
+            'hardware': str(d['hardware']),              # Hardware - ex: 'FM-Eco4 S'
+            'hardware_id': d['hardware_id'],             # Hardware ID - FM Eco4 S=157
+            'soft': d['soft_id'],                        # Soft ID
+            'template_id': str(d['template_id']),        # Template ID - Default 2531 para "GTFrota Eco Light"
+            'delay_hour': str(d['delay_hour']),          # Delay hour
+            'delay_min': str(d['delay_min']),            # Delay minutes
+            'make': str(d['make']),                      # Make
+            'model': str(d['model']),                    # Model
+            'object_color': str(d['object_color']),      # Color
+            'admin_notes': str(d['notes']),              # Notes
+            'vin': str(d['vin']),                        # VIN
+            'vehicle_type': str(d['vehicle_type']),      # Vehicle Type - UNSPECIFIED or PASSENGER
+            'temp_payment_plan_id': str(d['tppid']),     # Temporary Payment Plan
             'temp_from_date': datetime.today().strftime('%Y-%m-%d'),
             'temp_to_date': (datetime.today() + timedelta(days=30)).strftime('%Y-%m-%d'),
-            'payment_plan_id': str(ppid),           # Payment Plan ID - default 'TrustTrack2 Standart' = 3237
+            'payment_plan_id': str(d['ppid']),           # Payment Plan ID - default 'TrustTrack2 Standart' = 3237
             'enforce_disable_payment_plan': '0',    # Enforce disable payment plant
             'preselected_payment_plan': '',         # Preselected payment plan
-            'installer': str(installer),            # Installer
+            'installer': str(d['installer']),       # Installer
             'install_date': '',                     # Install date
             'uninstall_date': '',                   # Uninstall date
             'visible': '0',                         # Visible
@@ -136,12 +162,11 @@ class Client:
             'mask': '',                             # Mask
             'extra_mask': '',                       # Extra mask
             'pnd_type': '0',                        # PND Type
-            'username': str(fm_username),           # FM Login
-            'password': str(fm_password),           # FM Password
+            'username': str(d['fm_username']),           # FM Login
+            'password': str(d['fm_password']),           # FM Password
             'create': 'Create',                     # Create
         }
-        print(f'[ * ] Criando objeto no Locator.')
-        print(f'--->\t Nome: {str(name)}, cliente: {self.company}')
+        logger.info(f'Criando objeto no locator. <name:{str(name)}, client: {self.company}>')
         r = self.locator.session.post(self.locator.HOST + '/administrator/objects/create', params)
         soup = BeautifulSoup(r.text, 'html.parser')
         error_strings = [i.text for i in soup('div', 'error')]
@@ -151,18 +176,16 @@ class Client:
 
         string = soup('span', {'class': 'done'})[0].text
         if string == 'Done':
-            string = 'OK!'
-        return string
+            return 0
+        
     
-    def create_sim(self, sim_card: 'Sim_Card'):
-        print('[ * ] Criando SIM card no Locator.')
-        print(f'--->\t Telefone: {sim_card.line}')
-        print(f'--->\t Cliente: {self.company}')
+    def create_sim(self, sim_card: Sim_Card) -> None:
+        logger.info(f'Criando SIM card no Locator. <tel: {sim_card.line}, client: {self.company}')
         params = {
-            'service_pr': 'Excel Produtos Eletronicos',
-            'service_provider': '1407',
+            'service_pr': str(self.locator.service_pr),
+            'service_provider': str(self.locator.service_provider),
             'clients': str(self.id),
-            'provider': '30',
+            'provider': '30',           # Provider: Other
             'phone': str(sim_card.line),
             'numbers': '1',
             'pin': '',
@@ -177,16 +200,9 @@ class Client:
         
         r = self.locator.session.post(self.locator.HOST + '/administrator/connection/create', params)
         soup = BeautifulSoup(r.text, 'html.parser')
-        try:
-            string = soup('div', 'error')[0].contents[0]
-            success = False
-        except:
-            string = 'OK!'
-            success = True
-        print(f'--->\t status: {string}\n')
-        return success
-
-
+        
+        if len(soup('div', 'error')) > 0:
+            raise Exception(soup('div', 'error'))
 
     @property
     def api_key(self) -> str:
@@ -195,4 +211,4 @@ class Client:
                 return web_user.api_key
             except:
                 pass
-        raise Exception('Não foi possível encontrar uma api key devido a falta de web users ou falta de api nos web users.')        
+        raise Exception('Não foi possível encontrar uma api key devido a falta de web users ou falta de api nos web users.')

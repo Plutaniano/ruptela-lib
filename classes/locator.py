@@ -1,8 +1,8 @@
+from bs4 import BeautifulSoup
 import requests
 from typing import *
 
 from .client import Client
-from .hardware import Hardware
 from .sim_card import Sim_Card
 
 
@@ -10,7 +10,7 @@ class Locator():
     HOST = 'https://track.ruptela.lt'
     API_HOST = 'http://api.fm-track.com'
 
-    def __init__(self, username='ExcelProdutos', password='sLzN58LZ', fast=False):
+    def __init__(self, username: str = 'ExcelProdutos', password: str = 'sLzN58LZ', fast: bool = False) -> None:
         self.username = username
         self.password = password
         self.is_fast = fast
@@ -18,8 +18,7 @@ class Locator():
         if self.login():
             print('--->\t Coletando informações, por favor aguarde...')
             self.get_clients(sync=True)
-            Hardware.init(self)
-            self.hardwares = Hardware.all
+            self._set_connection_id()
 
 
     def login(self) -> bool:
@@ -43,9 +42,9 @@ class Locator():
             'Connection': 'keep-alive',
             'Accept': 'application/javascript, application/json',
             'X-Requested-With': 'XMLHttpRequest',
-            'X-Range': 'items=0-29',
+            'X-Range': 'items=0-9999',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36 OPR/70.0.3728.154',
-            'Range': 'items=0-29',
+            'Range': 'items=0-9999',
             'Content-Type': 'application/x-www-form-urlencoded',
             'Sec-Fetch-Site': 'same-origin',
             'Sec-Fetch-Mode': 'cors',
@@ -71,14 +70,14 @@ class Locator():
             objs += len(client.objects)
         return f'[Locator] <clients:{len(self.clients)} objects:{objs}>'
 
-    def __getitem__(self, key) -> Client:
+    def __getitem__(self, key: str) -> Client:
         for client in self.clients:
             if client.company == key:
                 return client
         raise KeyError(f'Não foi possível encontrar um client com o nome \'{key}\'')
 
 
-    def _get_phone_id(self, sim_card) -> str:
+    def _get_phone_id(self, sim_card: Union[str, Sim_Card]) -> str:
         if isinstance(sim_card, Sim_Card):
             line = sim_card.line
         else:
@@ -101,6 +100,13 @@ class Locator():
                 return row['id'].strip()
         else:
             raise Exception('Phone not found!')
+
+    def _set_connection_id(self) -> None:
+        r = self.session.get(self.HOST + '/administrator/connection/create')
+        s = BeautifulSoup(r.content, 'html.parser')
+        self._service_provider = s.find('input', {'name': 'service_provider'})['value']
+        self._service_pr = s.find('input', {'name': 'service_pr'})['value']
+
 
 
 if __name__ == '__main__':
