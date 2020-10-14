@@ -5,6 +5,8 @@ from typing import *
 from .client import Client
 from .sim_card import Sim_Card
 
+import logging
+logger = logging.getLogger(__name__)
 
 class Locator():
     HOST = 'https://track.ruptela.lt'
@@ -16,7 +18,7 @@ class Locator():
         self.is_fast = fast
 
         if self.login():
-            print('--->\t Coletando informações, por favor aguarde...')
+            ('--->\t Coletando informações, por favor aguarde...')
             self.get_clients(sync=True)
             self._set_connection_id()
 
@@ -57,7 +59,7 @@ class Locator():
         for client in clients_req.json():
             client = Client(client, self)
             clients.append(client)
-        print(f'--->\t {len(clients)} clientes criados.')
+        logger.info(f'{len(clients)} clientes criados.')
         if sync:
             self.clients = clients
         else:

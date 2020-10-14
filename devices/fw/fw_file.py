@@ -8,16 +8,19 @@ from bs4 import BeautifulSoup
 
 from .fw_data_packet import FW_Data_Packet
 
+import logging
+logger = logging.getLogger(__name__)
+
 class FW_File:
     def __init__(self, device='Eco4S', path=None):
         self.progress = 'stopped'
         self.device = device
         if path == None:
-            print('--->\t Buscando firmware mais recente.')
+            logger.info('--->\t Buscando firmware mais recente.')
             fw_bytes = self._get_most_recent()
         else:
             fw_bytes = self._get_fw_from_file(path=path)
-            print(f'--->\t Arquivo \"{path}\" encontrado.')
+            logger.info(f'Arquivo \"{path}\" encontrado.')
 
         self.data_packets = []
         for packet_id, i in enumerate(range(0, len(fw_bytes), 512)):
@@ -44,7 +47,7 @@ class FW_File:
         regex = re.compile('FM.*\..*4')
         tag = s.find('a', text=regex)
         self.version = vers.parse(tag.text[-17:-6])
-        print(f'--->\t Arquivo: {tag.text}')
+        logger.info(f'Arquivo: {tag.text}')
         
         r = requests.get('https://doc.ruptela.lt' + tag['href'], allow_redirects=True)
         return r.content
