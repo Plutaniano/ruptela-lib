@@ -14,18 +14,37 @@ logger = logging.getLogger(__name__)
 
 class Client:
     """
-    Class for storing data related to locator clients.
+    Class for handling data related to locator clients.
     
     ...
 
     Attributes:
-    
 
+        locator: Locator
+            Locator instance that 'owns' this Client.
+
+        company: str
+            Name of the client.
+
+        phone: str
+            Phone number of the client.
+
+        id: int
+            ID of the client on locator.
+
+        email: str
+            Email of the client.
+
+        objects: List[Object]
+            List of all of its objects registered on locator.
+            If fast=True, will return a empty list.
+        
+        web_users: List[Web_User]
+            List of all web users associated with this Client.
     """
     all = []
 
     def __init__(self, d: dict, locator: 'Locator') -> None:
-        self.index = len(Client.all)
         self.all.append(self)
         self.locator = locator
         
@@ -37,7 +56,7 @@ class Client:
         self.objects = []
         self.web_users = []
 
-        if locator.is_fast == False:
+        if not locator.is_fast:
             self.get_web_users(sync=True)
             self.get_objects(sync=True)
 
@@ -69,6 +88,7 @@ class Client:
         Gathers data from all objects associated with this client. If sync=True is passed,
         self.objects is set to a list of all objects, otherwise, it returns a list of those objects.
         """
+        
         params={
             "version": "1",
             "api_key": self.api_key
@@ -93,7 +113,7 @@ class Client:
 
     def create_new_object(self, name: str, **kwargs: str) -> str:
         """
-        
+        Creates a new object on Locator.
         """
         d = {
         'hardware': '',

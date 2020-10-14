@@ -1,7 +1,5 @@
-from logging import log
 from typing import Union
 from .config_data_packet import Config_Data_Packet
-from .parameter import Parameter
 import serial
 import progressbar
 import os

@@ -12,7 +12,7 @@ class Locator():
     HOST = 'https://track.ruptela.lt'
     API_HOST = 'http://api.fm-track.com'
 
-    def __init__(self, username: str = 'ExcelProdutos', password: str = 'sLzN58LZ', fast: bool = False) -> None:
+    def __init__(self, username: str, password: str, fast: bool = False) -> None:
         self.username = username
         self.password = password
         self.is_fast = fast
