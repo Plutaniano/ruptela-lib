@@ -1,4 +1,5 @@
 from logging import log
+from typing import Union
 from .config_data_packet import Config_Data_Packet
 from .parameter import Parameter
 import serial
@@ -10,13 +11,15 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Config_File:
-    def __init__(self, filepath=''):
+    """
+    Class that stores information related to ruptela devices' config files.
+    """
+    def __init__(self, filepath: str = '') -> None:
         if filepath == '':
             for filename in os.listdir():
                 if '.fk4c' in filename:
                     filepath = filename
                     break
-        if filepath == '':
             raise FileNotFoundError('Arquivo de config (*.fk4c) não pode ser encontrado.')
 
         self.data_packets = []
@@ -31,13 +34,11 @@ class Config_File:
                 p = Config_Data_Packet(length, packet_id, param_count, params)
                 self.data_packets.append(p)
 
-    def __repr__(self):
-        param_count = 0
-        for i in self.data_packets:
-            param_count += i.param_count
-        return f'[cfg file] <data packets:{len(self.data_packets)} params: {param_count}>'
 
-    def write(self, port='', baud=115200, timeout=10):
+    def write(self, port: Union[str, serial.Serial] = '', baud: int = 115200, timeout: int = 10) -> None:
+        """
+        Writes the Config_File to the device on the specified serial port.
+        """
         if isinstance(port, serial.Serial):
             s = port
         else:
@@ -81,7 +82,13 @@ class Config_File:
                 else:
                     logger.info('Sucesso.')
                     time.sleep(1)
-            return 0
+            return 
+
+    def __repr__(self) -> str:
+        param_count = 0
+        for i in self.data_packets:
+            param_count += i.param_count
+        return f'[cfg file] <data packets:{len(self.data_packets)}, params:{param_count}>'
 
 if __name__ == '__main__':
     f = Config_File('config sample.fk4c')

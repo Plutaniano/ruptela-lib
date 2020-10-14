@@ -12,11 +12,11 @@ import logging
 logger = logging.getLogger(__name__)
 
 class FW_File:
-    def __init__(self, device='Eco4S', path=None):
+    def __init__(self, device: str = 'Eco4S', path: str = None) -> None:
         self.progress = 'stopped'
         self.device = device
         if path == None:
-            logger.info('--->\t Buscando firmware mais recente.')
+            logger.info('Buscando firmware mais recente.')
             fw_bytes = self._get_most_recent()
         else:
             fw_bytes = self._get_fw_from_file(path=path)
@@ -28,12 +28,7 @@ class FW_File:
             packet = FW_Data_Packet(chunk, packet_id + 1)
             self.data_packets.append(packet)
     
-    def __repr__(self):
-        return f'[FW_File] <version: {self.version}, data_packets:{len(self.data_packets)}>'
-
-    
-    
-    def _get_most_recent(self):
+    def _get_most_recent(self) -> bytes:
         links = {
             'Eco4S': ('https://doc.ruptela.lt/display/AB/FM-Eco4+S+Series', 'FM-Eco4 S Series firmware & configurator'),
             'Eco4light': ('https://doc.ruptela.lt/pages/viewpage.action?pageId=884810', 'FM-Eco4 light/light+/3G firmwares & configurators')
@@ -52,18 +47,23 @@ class FW_File:
         r = requests.get('https://doc.ruptela.lt' + tag['href'], allow_redirects=True)
         return r.content
     
-    def _get_fw_from_file(cls, path=None):
-        if path == None:
+    def _get_fw_from_file(self, path: str = '') -> bytes:
+        """
+        
+        """
+        if path == '':
             for filename in os.listdir():
                 if '.efwk4' in filename:
                     path = filename
                     break
-            if path == None:
                 raise FileNotFoundError('Arquivo de firmware (*.efwk4) não pode ser encontrado na pasta.')
 
         with open(path, 'rb') as f:
             file_bytes = f.read()
             return file_bytes
+
+    def __repr__(self) -> str:
+        return f'[FW_File] <version: {self.version}, data_packets:{len(self.data_packets)}>'
         
 if __name__ == '__main__':
     f = FW_File(path='fw sample.efwk4')

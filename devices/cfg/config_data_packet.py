@@ -1,9 +1,13 @@
 from .parameter import Parameter
 
 class Config_Data_Packet:
+    """
+    Class responsible for storing each data packet in a config file.
+    Also provides methods for retrieving information in a convenient format.
+    """
     all = []
 
-    def __init__(self, length, packet_id, param_count, parameters_raw):
+    def __init__(self, length: int, packet_id: int, param_count: int, parameters_raw: bytes) -> None:
         self.all.append(self)
         self.length = length
         self.id = packet_id
@@ -17,24 +21,24 @@ class Config_Data_Packet:
             self.parameters.append(p)
             parameters_raw = parameters_raw[2+1+param_length:]
 
-    def idf(self):
+    def idf(self) -> bytes:
         return int.to_bytes(self.id, 1, 'little')
 
-    def lengthf(self):
+    def lengthf(self) -> bytes:
         return int.to_bytes(self.length, 2, 'little')
     
-    def param_countf(self):
+    def param_countf(self) -> bytes:
         return int.to_bytes(self.param_count, 2, 'little')
 
-    def format(self):
+    def format(self) -> bytes:
         string = b''
         for p in self.parameters:
             string = string + p.idf() + p.lengthf() + p.valuef()
         return self.lengthf() + self.idf() + self.param_countf() + string
     
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'[Config_Data_Packet] <ID:{self.id} params:{self.param_count}>'
 
 if __name__ == '__main__':
-    from config_file import Config_File
+    from . import Config_File
     f = Config_File('config sample.fk4c')
