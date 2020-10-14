@@ -43,10 +43,14 @@ class Client:
 
         logger.info(f'\'{self.company}\' criado com {len(self.objects)} objetos.')
 
-    def __repr__(self) -> str:
-        return f'[Client] <company:\'{self.company}\', objects:{len(self.objects)}>'
 
     def get_web_users(self, sync: bool = False) -> Union[List[Web_User], None]:
+        """
+        Gathers data from all web users associated with this client. If sync=True is passed,
+        self.web_users is set to a list of all Web_Users, otherwise, it returns a list of
+        those web users.
+        """
+
         headers = {'X-Requested-With': 'XMLHttpRequest'}
         web_req = self.locator.session.get(self.locator.HOST + '/administrator/webusers/getList', headers=headers)
         web_users = []
@@ -61,6 +65,10 @@ class Client:
             return web_users
     
     def get_objects(self, sync: bool = False) -> Union[List[Object], None]:
+        """
+        Gathers data from all objects associated with this client. If sync=True is passed,
+        self.objects is set to a list of all objects, otherwise, it returns a list of those objects.
+        """
         params={
             "version": "1",
             "api_key": self.api_key
@@ -75,6 +83,9 @@ class Client:
             return objs
 
     def find_by_name(self, name: str) -> Object:
+        """
+        Returns a object with the provided name. Raises NameError if it doesn't exist.
+        """
         for i in self.objects:
             if i.name == name:
                 return i
@@ -172,13 +183,13 @@ class Client:
         error_strings = [i.text for i in soup('div', 'error')]
 
         if len(error_strings) > 0:
-            raise Exception('\n'.join(error_strings))
+            raise Exception(' | '.join(error_strings))
 
         string = soup('span', {'class': 'done'})[0].text
         if string == 'Done':
-            return 0
+            return 
         
-    
+
     def create_sim(self, sim_card: Sim_Card) -> None:
         logger.info(f'Criando SIM card no Locator. <tel: {sim_card.line}, client: {self.company}')
         params = {
@@ -206,9 +217,16 @@ class Client:
 
     @property
     def api_key(self) -> str:
+        """
+        Property that returns the first api-key avaiable in this client's webusers.
+        Raise an exception if it finds None.
+        """
         for web_user in self.web_users:
             try:
                 return web_user.api_key
             except:
                 pass
         raise Exception('Não foi possível encontrar uma api key devido a falta de web users ou falta de api nos web users.')
+
+    def __repr__(self) -> str:
+        return f'[Client] <company:\'{self.company}\', objects:{len(self.objects)}>'

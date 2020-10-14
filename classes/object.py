@@ -3,12 +3,14 @@ from typing import *
 import datetime
 import requests
 
+import logging
+logger = logging.getLogger(__name__)
 
 
 class Object:
     all = []
 
-    def __init__(self, d, owner) -> None:
+    def __init__(self, d: dict, owner: 'Client') -> None:
         self.client = owner
         self.id = d["id"]
         self.name = d["name"]
@@ -16,7 +18,7 @@ class Object:
         self.all.append(self)
 
     @classmethod
-    def get_by_name(self, name) -> Object:
+    def get_by_name(self, name: str) -> Object:
         """
         Class method for finding objects by name.
         """
@@ -25,9 +27,9 @@ class Object:
                 return i
         raise Exception('Object not found.')
 
-    def get_interval(self, time_from, time_to=0) -> Union[List[dict], requests.request]:
+    def get_interval(self, time_from: Union[int, float], time_to: Union[int, float]=0) -> List[dict]:
         """
-        Method for getting data from a vehicle from a specified time interval.
+        Method for getting data packets sent from a vehicle in a specified time interval.
         """
         now = datetime.datetime.utcnow()
         time_from = (now - datetime.timedelta(days=time_from)).isoformat()[:-3] + 'Z'
@@ -41,24 +43,18 @@ class Object:
         }
 
         r = requests.get(self.client.locator.API_HOST + f'/objects/{self.id}/coordinates', params=params)
-        print(f'[{self.name}] Requisitando pacotes... ', end="", flush=True)
+        logger.info(f'[{self.name}] Requisitando pacotes')
         packets = []
-        try:
+        for i in r.json()['items']:
+            packets.append(i)
+
+        while 'continuation_token' in r.json().keys():
+            params['continuation_token'] = r.json()['continuation_token']
+            r = requests.get(self.client.locator.API_HOST + f'/objects/{self.id}/coordinates', params=params)
             for i in r.json()['items']:
                 packets.append(i)
-
-            while r.json()['continuation_token'] != None:
-                params['continuation_token'] = r.json()['continuation_token']
-                r = requests.get(self.client.locator.API_HOST + f'/objects/{self.id}/coordinates', params=params)
-                print('*', end='', flush=True)
-                for i in r.json()['items']:
-                    packets.append(i)
-            print(f'\n{len(packets)} pacotes.')
-            return packets
-
-        except Exception as e:
-            print('Ocorreu um erro, retornando o ultimo request para debug.')
-            return r
+        logger.info(f'\n{len(packets)} pacotes.')
+        return packets
         
 
     def __repr__(self):

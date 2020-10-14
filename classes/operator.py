@@ -9,9 +9,14 @@ from selenium.webdriver.chrome.options import Options
 from .sim_card import Sim_Card
 
 class Operator:
+    """
+    Class for gathering data from operator's websites and storing it in a
+    standard format. Also provides some default search methods.
+    """
+
     all = []
 
-    def __init__(self, name: str, username: str, password: str, host: str, apn: tuple):
+    def __init__(self, name: str, username: str, password: str, host: str, apn: tuple) -> None:
         Operator.all.append(self)
 
         self.name = name
@@ -25,19 +30,25 @@ class Operator:
     
 
     def login(self) -> None:
-        # implementar função
+        # this function needs to be implemented on classes that inherit from Operator
         pass
         
     def sync_simcards(self) -> None:
-        # implementar função
+        # this function needs to be implemented on classes that inherit from Operator
         pass
     
     def create_webdriver(self) -> None:
+        """
+        Creates a webdriver instance on self.driver.
+        """
         manager = ChromeDriverManager(log_level='0').install()
         self.driver = webdriver.Chrome(manager, options=self.options)
         self.driver.keys = Keys
 
-    def set_options(self) -> None:      #define algumas opções para o browser "virtual"
+    def set_options(self) -> None:
+        """
+        Configures some options and settings for the webdriver.
+        """
         options = Options()
         options.headless = True
         prefs = {"download.default_directory" : os.getcwd()}
@@ -45,13 +56,21 @@ class Operator:
         options.add_experimental_option("prefs",prefs)
         self.options = options
 
-    def find_by_ICCID(self, ICCID) -> Sim_Card:     # retorna o objeto Sim_Card correspondente ao ICCID inputado
+    def find_by_ICCID(self, ICCID) -> Sim_Card:
+        """
+        Returns a sim card with the provided ICCID. If it can't be found,
+        it raises KeyError instead.
+        """
         for sim in self.simcards:
             if sim.ICCID == ICCID:
                 return sim
         raise KeyError(f'O ICCID {ICCID} não corresponde a um número.')
 
     def find_by_line(self, line) -> Sim_Card:
+        """
+        Returns a sim card with the provided phone number (line). If it
+        can't be found, it raises KeyError instead.
+        """
         for sim in self.simcards:
             if sim.line == line:
                 return sim
@@ -61,5 +80,8 @@ class Operator:
         return f'[{self.name}] {len(self.simcards)} sim cards.'
 
     @atexit.register
-    def _exit_handler(self):
+    def _exit_handler(self) -> None:
+        """
+        Closes the webdriver instance on program close, prevents memory leaks.
+        """
         self.driver.quit()

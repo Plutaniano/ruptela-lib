@@ -49,20 +49,21 @@ class Device:
                 self._fw_file = Device.firmwares[self.device]
         return self._fw_file
 
-    def update(self) -> bool:
+    def update(self) -> None:
         """
         Method for updating the device. Will check if the firmware currently
         in the device is more recent or equal to the most recent firmware avaiable
         before actually writing anything to the device.
         """
         if self.fw_version < self.fw_file.version:
-            return self._write_fw()
+            self._write_fw()
+            return
         else:
             self.fwstatus = 'O dispositivo já está na última versão disponível.'
             logger.info('O dispositivo já está na última versão disponível.')
-            return 0
+            return
 
-    def _write_fw(self) -> bool:
+    def _write_fw(self) -> None:
         """
         Method for writing the firmware bytes to the device. Performs no checks.
         If you want to update your device, use .update() instead.
@@ -96,7 +97,7 @@ class Device:
                 self.fwstatus = 'Firmware gravado com sucesso.'
                 logger.info('Sucesso.')
             self.ser.write(b'|FU_END*')
-            return 0
+            return 
     
     def send_config(self, cfg: Config_File) -> bool:
         """
@@ -107,7 +108,7 @@ class Device:
     
     def _write_config(self, cfg: Config_File) -> bool:
         """
-        Method for writing the Config_File bytes to the device. Performs no checks.
+        Method for writing the Config_File's bytes to the device. Performs no checks.
         If you want to update your config, use .send_config() instead.
         """
         with self.ser:
