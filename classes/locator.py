@@ -11,14 +11,14 @@ logger = logging.getLogger(__name__)
 class Locator():
     HOST = 'https://track.ruptela.lt'
     API_HOST = 'http://api.fm-track.com'
-
+    
     def __init__(self, username: str, password: str, fast: bool = False) -> None:
         self.username = username
         self.password = password
         self.is_fast = fast
 
         if self.login():
-            ('--->\t Coletando informações, por favor aguarde...')
+            logger.info('--->\t Coletando informações, por favor aguarde...')
             self.get_clients(sync=True)
             self._set_connection_id()
 
