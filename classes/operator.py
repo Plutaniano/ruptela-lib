@@ -10,7 +10,7 @@ from .sim_card import Sim_Card
 
 class Operator:
     """
-    Class for gathering data from operator's websites and storing it in a
+    Class for gathering data from operator's website and storing it in a
     standard format. Also provides some default search methods.
     """
 

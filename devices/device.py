@@ -20,9 +20,13 @@ class Device:
     Base class for Ruptela devices.
     """
     firmwares = {}
+    children = set()
     
     def __init__(self, comport, bootloader, fw_version, hardware, imei):
-        self.ser = serial.Serial(comport, 115200, timeout=15)
+        if type(self) not in Device.children:
+            Device.children.add(self)
+
+        self.ser = serial.Serial(comport, 115200, timeout=10)
         self.ser.close()
         self.bootloader = bootloader
         self.fw_version = version.parse(fw_version)
@@ -30,6 +34,7 @@ class Device:
         self.imei = imei
         self._fw_file = ''
         self.status = 'Dispositivo conectado.'
+        self.set_config()
 
 
     @property
@@ -76,7 +81,7 @@ class Device:
                 raise ValueError(f'valor lido: {incoming}, esperado: {expected}')
             logger.info('Atualização iniciada.')
             
-            self.fwstatus = '0%'
+            self.fwstatus = 0
             for p in progressbar.progressbar(self.fw_file.data_packets):
                 self.fwstatus += 100//len(self.fw_file.data_packets)
                 self.ser.write(b'|FU_PCK*' + p.format() + b'\r\n')
@@ -95,17 +100,32 @@ class Device:
                 raise ValueError('Erro escrevendo firmware. Esperado: {expected}, recebido: {incoming}')
             else:
                 self.fwstatus = 'Firmware gravado com sucesso.'
+                logger.info('Aguardando reset.')
+                time.sleep(18)
                 logger.info('Sucesso.')
             self.ser.write(b'|FU_END*')
             return 
     
-    def send_config(self, cfg: Config_File) -> bool:
+    def set_config(self, file: str = '') -> None:
+        if isinstance(file, Config_File):
+            self.config_file = file
+            return
+
+        if file == '':
+            self.config_file = Config_File(self.config_ext)
+        else:
+            self.config_file = Config_File(file)
+
+    def send_config(self, cfg: Config_File = '') -> None:
         """
         Method for sending a Config_File to the device. No checks before
         starting to write bytes to the device.
         """
-        return self._write_config(cfg)
-    
+        if cfg != '':
+            self._write_config(cfg)
+        else:
+            self._write_config(self.config_file)
+
     def _write_config(self, cfg: Config_File) -> bool:
         """
         Method for writing the Config_File's bytes to the device. Performs no checks.
@@ -156,7 +176,7 @@ class Device:
                     del self.status
                     logger.info('Sucesso.')
                     time.sleep(1)
-            return 0
+
 
     def is_connected(self):
         if self.ser.port in [i.device for i in comports()]:
@@ -168,34 +188,46 @@ class Eco4S(Device):
     """
     Class for the FM-Eco4 light+ S
     """
+    device = 'Eco4S'
+    config_ext = 'fk4c'
+    template_id = '2531'
+    hardwarelist = {
+        'id': '157',
+        'name': 'FM-Eco4 S',
+        'description': 'FM-Eco4 S',
+        'hw_version': 'FM-Eco4 S',
+        'soft_id': '356',
+        'soft_version': 'FM-Eco4 S'
+    }
+
     def __init__(self, comport, bootloader, fw_version, hardware, imei) -> None:
-        self.device = 'Eco4S'
-        self.hardwarelist = {
-            'id': '157',
-            'name': 'FM-Eco4 S',
-            'description': 'FM-Eco4 S',
-            'hw_version': 'FM-Eco4 S',
-            'soft_id': '356',
-            'soft_version': 'FM-Eco4 S'
-        }
         super().__init__(comport, bootloader, fw_version, hardware, imei)
+
+Device.children.add(Eco4S)
 
 
 class Eco4light(Device):
     """
     Class for the FM-Eco4 light+ S
     """
+
+    device = 'Eco4light'
+    config_ext = 'fe4c'
+    template_id = '2553'
+    hardwarelist = {
+        'id': '138',
+        'name': 'FM-Eco4 light',
+        'description': 'FM-Eco4 light',
+        'hw_version': 'FM-Eco4 light',
+        'soft_id': '315',
+        'soft_version': 'FM-Eco4 light'
+    }
     def __init__(self, comport, bootloader, fw_version, hardware, imei) -> None:
-        self.device = 'Eco4light'
-        self.hardwarelist = {
-            'id': '138',
-            'name': 'FM-Eco4 light',
-            'description': 'FM-Eco4 light',
-            'hw_version': 'FM-Eco4 light',
-            'soft_id': '315',
-            'soft_version': 'FM-Eco4 light'
-        }
         super().__init__(comport, bootloader, fw_version, hardware, imei)
+
+Device.children.add(Eco4light)
+    
+
 
 
 def DeviceFactory(comport='') -> Union[Eco4light, Eco4S]:

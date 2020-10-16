@@ -12,16 +12,18 @@ class Config_File:
     """
     Class that stores information related to ruptela devices' config files.
     """
-    def __init__(self, filepath: str = '') -> None:
-        if filepath == '':
-            for filename in os.listdir():
-                if '.fk4c' in filename:
-                    filepath = filename
-                    break
-            raise FileNotFoundError('Arquivo de config (*.fk4c) não pode ser encontrado.')
+    def __init__(self, file: str) -> None:
+        filename = None
+        for i in os.listdir():
+            if file in i:
+                filename = i
+                break
+        
+        if filename == None:
+            raise FileNotFoundError(f'Arquivo de config (\'{file}\') não pode ser encontrado.')
 
         self.data_packets = []
-        with open(filepath, 'rb') as f:
+        with open(filename, 'rb') as f:
             eof = f.seek(0, os.SEEK_END)
             f.seek(0)
             while f.tell() != eof:

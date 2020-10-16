@@ -111,12 +111,11 @@ class Client:
                 return i
         raise NameError('Não foi possível encontrar objeto com o nome especificado.')
 
-    def create_new_object(self, name: str, **kwargs: str) -> str:
+    def create_new_object(self, **kwargs: str) -> str:
         """
         Creates a new object on Locator.
         """
         d = {
-        'hardware': '',
         'description': '.',
         'drivers_phone': '',
         'serial': '',
@@ -142,6 +141,7 @@ class Client:
             d['hardware'] = d['device'].hardwarelist['name']
             d['hardware_id'] = d['device'].hardwarelist['id']
             d['soft_id'] = d['device'].hardwarelist['soft_id']
+            d['template_id'] = d['device'].template_id
 
         try:
             assert d['name'] != '' and isinstance(d['name'], str)
@@ -156,7 +156,7 @@ class Client:
             phone_id = self.locator._get_phone_id(d['sim_card'])
         params = {
             'client': str(self.id),                      # Client ID - 51879=Colorado
-            'object': str(name),                         # Object Name
+            'object': str(d['name']),                         # Object Name
             'type': 'vehicle',                           # vehicle or trailer
             'state': '1',                                # State: 1-'' 2-'New/not installed' 3-Testing 4-For Repair 5-Uninstalled
             'tt_version': 'TT2',                         # TT2
@@ -168,7 +168,7 @@ class Client:
             'hardware': str(d['hardware']),              # Hardware - ex: 'FM-Eco4 S'
             'hardware_id': d['hardware_id'],             # Hardware ID - FM Eco4 S=157
             'soft': d['soft_id'],                        # Soft ID
-            'template_id': str(d['template_id']),        # Template ID - Default 2531 para "GTFrota Eco Light"
+            'template_id': str(d['template_id']),        # Template ID - Default 2531 para "GTFrota Eco Light" - 2553 para "GTFrota Eco Light 3G"
             'delay_hour': str(d['delay_hour']),          # Delay hour
             'delay_min': str(d['delay_min']),            # Delay minutes
             'make': str(d['make']),                      # Make
@@ -197,7 +197,7 @@ class Client:
             'password': str(d['fm_password']),           # FM Password
             'create': 'Create',                     # Create
         }
-        logger.info(f'Criando objeto no locator. <name:{str(name)}, client: {self.company}>')
+        logger.info(f'Criando objeto no locator. <name:{d["name"]}, client: {self.company}>')
         r = self.locator.session.post(self.locator.HOST + '/administrator/objects/create', params)
         soup = BeautifulSoup(r.text, 'html.parser')
         error_strings = [i.text for i in soup('div', 'error')]
@@ -213,8 +213,8 @@ class Client:
     def create_sim(self, sim_card: Sim_Card) -> None:
         logger.info(f'Criando SIM card no Locator. <tel: {sim_card.line}, client: {self.company}')
         params = {
-            'service_pr': str(self.locator.service_pr),
-            'service_provider': str(self.locator.service_provider),
+            'service_pr': str(self.locator._service_pr),
+            'service_provider': str(self.locator._service_provider),
             'clients': str(self.id),
             'provider': '30',           # Provider: Other
             'phone': str(sim_card.line),
