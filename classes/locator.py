@@ -1,3 +1,4 @@
+from .errors import AuthenticationError
 import requests
 from typing import *
 
@@ -17,14 +18,15 @@ class Locator():
         self.username = username
         self.password = password
         self.is_fast = fast
+        self.logged_in = False
 
-        if self.login():
-            logger.info('Coletando informações, por favor aguarde...')
-            self.get_clients(sync=True)
-            self._set_connection_id()
+        self.login()
+        logger.info('Coletando informações, por favor aguarde...')
+        self.get_clients(sync=True)
+        self._set_connection_id()
 
 
-    def login(self) -> bool:
+    def login(self) -> None:
         self.session = requests.Session()
         params = {
             'page': 'authentication',
@@ -37,8 +39,7 @@ class Locator():
 
         login_req = self.session.post(self.HOST + '/administrator/authentication/login', params=params, data=data, )
         if login_req.status_code != 200:
-            raise Exception('Não foi possível logar no Locator.')
-        return True
+            raise AuthenticationError(self.username, self.password)
     
     def get_clients(self, sync: bool = False) -> Union[None, List[Client]]:
         headers = {

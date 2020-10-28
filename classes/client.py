@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup
 from .web_user import Web_User
 from .object import Object
 from .sim_card import Sim_Card
+from .errors import *
 
 import logging
 logger = logging.getLogger(__name__)
@@ -246,7 +247,7 @@ class Client:
                 return web_user.api_key
             except:
                 pass
-        raise Exception('Não foi possível encontrar uma api key devido a falta de web users ou falta de api nos web users.')
+        raise MissingAPIKeyError(self)
 
     def __repr__(self) -> str:
         return f'[Client] <company:\'{self.company}\', objects:{len(self.objects)}>'

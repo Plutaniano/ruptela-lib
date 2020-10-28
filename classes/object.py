@@ -27,7 +27,7 @@ class Object:
                 return i
         raise Exception('Object not found.')
 
-    def get_interval(self, time_from: Union[int, float], time_to: Union[int, float]=0) -> List[dict]:
+    def get_interval(self, time_from: Union[int, float], time_to: Union[int, float] = 0) -> List[dict]:
         """
         Method for getting data packets sent from a vehicle in a specified time interval.
         """
@@ -48,8 +48,8 @@ class Object:
         for i in r.json()['items']:
             packets.append(i)
 
-        while 'continuation_token' in r.json().keys():
-            params['continuation_token'] = r.json()['continuation_token']
+        while r.json()['continuation_token']  != None:
+            params['from_datetime'] = r.json()['continuation_token']
             r = requests.get(self.client.locator.API_HOST + f'/objects/{self.id}/coordinates', params=params)
             for i in r.json()['items']:
                 packets.append(i)
