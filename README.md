@@ -1,6 +1,6 @@
-# Ruptela-Locator-Utility
+# Ruptela-Lib
 
-O Ruptela-locator-utility é uma biblioteca Python criada para facilitar a automação da interação com a plataforma "Locator Control Manager" da Ruptela, principalmente nas funções de criar objeto, criar SIM card e encontrar o número de telefone associado a um ICCID. Também possui scripts para a criação de gráficos.
+A Ruptela-Lib é uma biblioteca Python criada para facilitar a automação da interação com a plataforma "Locator Control Manager" da Ruptela, principalmente nas funções de criar objeto, criar SIM card e encontrar o número de telefone associado a um ICCID. Também possui scripts para a criação de gráficos.
 
 
 # Instalação
@@ -9,7 +9,7 @@ Na aba "releases" do GitHub é possível baixar um arquivo .exe independente, qu
 
 Se quiser baixar e executar os arquivos Python diretamente, execute os seguinte comandos no Powershell do Windows:
 ```
-git clone https://github.com/Plutaniano/ruptela
+git clone https://github.com/Plutaniano/ruptela-lib
 cd ruptela
 python3 main.py
 ```
