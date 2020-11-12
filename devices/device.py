@@ -26,7 +26,7 @@ class Device:
         if type(self) not in Device.children:
             Device.children.add(self)
 
-        self.ser = serial.Serial(comport, 115200, timeout=10)
+        self.ser = serial.Serial(comport, 115200, timeout=30)
         self.ser.close()
         self.bootloader = bootloader
         self.fw_version = version.parse(fw_version)

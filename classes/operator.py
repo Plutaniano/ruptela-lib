@@ -80,8 +80,9 @@ class Operator:
         return f'[{self.name}] {len(self.simcards)} sim cards.'
 
     @atexit.register
-    def _exit_handler(self) -> None:
+    def _exit_handler() -> None:
         """
         Closes the webdriver instance on program close, prevents memory leaks.
         """
-        self.driver.quit()
+        for i in Operator.all:
+            i.driver.quit()
