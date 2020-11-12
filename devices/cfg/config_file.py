@@ -5,8 +5,6 @@ import progressbar
 import os
 import time
 
-import logging
-logger = logging.getLogger(__name__)
 
 class Config_File:
     """
@@ -45,7 +43,7 @@ class Config_File:
             s = serial.Serial(port, baud, timeout=timeout)
 
         with s:
-            logger.info('Iniciando comunicação com o dispositivo.')
+            print('Iniciando comunicação com o dispositivo.')
             s.write(b'#cfg_reset@\r\n')
             time.sleep(0.01)
             s.write(b'#cfg_start@\r\n')
@@ -56,7 +54,7 @@ class Config_File:
             if msg_received != expected_msg and msg_received != b'@cfg_sts#01\r\n':
                 raise ValueError(f'valor lido: {msg_received}, esperado {expected_msg}')
 
-            logger.info('Upload inicializado.')
+            print('Upload inicializado.')
             for p in progressbar.progressbar(self.data_packets):
                 s.write(b'#cfg_send@' + p.format() + b'*\r\n')
 
@@ -65,7 +63,7 @@ class Config_File:
                 if msg_received != expected_msg:
                     raise ValueError(f'[ERR] erro enviando data_packet. recebido:{msg_received}, esperado: {expected_msg}')
             
-            logger.info('Escrevendo config.')
+            print('Escrevendo config.')
             s.write(b'#cfg_write@\r\n')
 
             expected_msg = b'@cfg_sts#10'
@@ -80,7 +78,7 @@ class Config_File:
                 if msg_received != expected_msg:
                     raise ValueError(f'[ERR] erro na resposta do pedido de escrita. msg:{msg_received}')
                 else:
-                    logger.info('Sucesso.')
+                    print('Sucesso.')
                     time.sleep(1)
             return 
 

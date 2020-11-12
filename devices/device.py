@@ -2,7 +2,6 @@ from typing import *
 from packaging import version
 import time
 import re
-import logging
 
 import progressbar
 import serial
@@ -12,8 +11,6 @@ from .cfg import Config_File
 from .fw import FW_File
 from ..classes.errors import *
 
-import logging
-logger = logging.getLogger(__name__)
 
 class Device:
     """
@@ -65,7 +62,7 @@ class Device:
             return
         else:
             self.fwstatus = 'O dispositivo já está na última versão disponível.'
-            logger.info('O dispositivo já está na última versão disponível.')
+            print('O dispositivo já está na última versão disponível.')
             return
 
     def _write_fw(self) -> None:
@@ -79,7 +76,7 @@ class Device:
             incoming = self.ser.readline()
             if incoming != expected:
                 raise ValueError(f'valor lido: {incoming}, esperado: {expected}')
-            logger.info('Atualização iniciada.')
+            print('Atualização iniciada.')
             
             self.fwstatus = 0
             for p in progressbar.progressbar(self.fw_file.data_packets):
@@ -91,7 +88,7 @@ class Device:
                     raise ValueError(f'valor lido: {incoming}, esperado: {expected}')
 
 
-            logger.info('Escrevendo firmware...')
+            print('Escrevendo firmware...')
             self.ser.write(b'|FU_WRITE*\r\n')
             expected = b'*FU_OK|\r\n'
             incoming = self.ser.read(len(expected))
@@ -100,9 +97,9 @@ class Device:
                 raise ValueError('Erro escrevendo firmware. Esperado: {expected}, recebido: {incoming}')
             else:
                 self.fwstatus = 'Firmware gravado com sucesso.'
-                logger.info('Aguardando reset.')
+                print('Aguardando reset.')
                 time.sleep(18)
-                logger.info('Sucesso.')
+                print('Sucesso.')
             self.ser.write(b'|FU_END*')
             return 
     
@@ -132,7 +129,7 @@ class Device:
         If you want to update your config, use .send_config() instead.
         """
         with self.ser:
-            logger.info('Iniciando comunicação com o dispositivo.')
+            print('Iniciando comunicação com o dispositivo.')
             self.ser.write(b'#cfg_reset@\r\n')
             time.sleep(0.1)
             self.ser.write(b'#cfg_start@\r\n')
@@ -143,7 +140,7 @@ class Device:
             if msg_received != expected_msg and msg_received != b'@cfg_sts#01\r\n':
                 raise ValueError(f'valor lido: {msg_received}, esperado {expected_msg}')
 
-            logger.info('Upload inicializado.')
+            print('Upload inicializado.')
             self.cfgstatus = 0
             for p in progressbar.progressbar(cfg.data_packets):
                 self.cfgstatus += 100//len(cfg.data_packets)
@@ -152,17 +149,17 @@ class Device:
                 expected_msg = b'@cfg_sts#1' + p.idf() + b'\r\n'
                 msg_received = self.ser.read(len(expected_msg))
                 if msg_received != expected_msg:
-                    logger.error(f'Erro enviando data_packet. recebido:{msg_received}, esperado: {expected_msg}')
+                    print(f'Erro enviando data_packet. recebido:{msg_received}, esperado: {expected_msg}')
                     raise ValueError(f'Erro enviando data_packet. recebido:{msg_received}, esperado: {expected_msg}')
             
-            logger.info('Escrevendo config.')
+            print('Escrevendo config.')
             self.cfgstatus = 'Escrevendo config.'
             self.ser.write(b'#cfg_write@\r\n')
 
             expected_msg = b'@cfg_sts#10'
             msg_received = self.ser.read(len(expected_msg))
             if msg_received != expected_msg:
-                logger.error(f'Erro escrevendo config. msg: {msg_received}.')
+                print(f'Erro escrevendo config. msg: {msg_received}.')
                 raise ValueError(f'[ERR] erro escrevendo config. msg:{msg_received}')
             else:
                 self.ser.write(b'#cfg_end@\r\n')
@@ -174,7 +171,7 @@ class Device:
                 else:
                     self.cfgstatus = 'Config escrita com sucesso.'
                     del self.status
-                    logger.info('Sucesso.')
+                    print('Sucesso.')
                     time.sleep(1)
 
 

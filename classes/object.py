@@ -3,8 +3,6 @@ from typing import *
 import datetime
 import requests
 
-import logging
-logger = logging.getLogger(__name__)
 
 
 class Object:
@@ -43,7 +41,7 @@ class Object:
         }
 
         r = requests.get(self.client.locator.API_HOST + f'/objects/{self.id}/coordinates', params=params)
-        logger.info(f'[{self.name}] Requisitando pacotes')
+        print(f'[{self.name}] Requisitando pacotes')
         packets = []
         for i in r.json()['items']:
             packets.append(i)
@@ -53,7 +51,7 @@ class Object:
             r = requests.get(self.client.locator.API_HOST + f'/objects/{self.id}/coordinates', params=params)
             for i in r.json()['items']:
                 packets.append(i)
-        logger.info(f'\n{len(packets)} pacotes.')
+        print(f'\n{len(packets)} pacotes.')
         return packets
         
 

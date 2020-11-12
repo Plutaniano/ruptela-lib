@@ -10,9 +10,6 @@ from .object import Object
 from .sim_card import Sim_Card
 from .errors import *
 
-import logging
-logger = logging.getLogger(__name__)
-
 class Client:
     """
     Class for handling data related to locator clients.
@@ -61,7 +58,7 @@ class Client:
             self.get_web_users(sync=True)
             self.get_objects(sync=True)
 
-        logger.info(f'\'{self.company}\' criado com {len(self.objects)} objetos.')
+        print(f'\'{self.company}\' criado com {len(self.objects)} objetos.')
 
 
     def get_web_users(self, sync: bool = False) -> Union[List[Web_User], None]:
@@ -198,7 +195,7 @@ class Client:
             'password': str(d['fm_password']),           # FM Password
             'create': 'Create',                     # Create
         }
-        logger.info(f'Criando objeto no locator. <name:{d["name"]}, client: {self.company}>')
+        print(f'Criando objeto no locator. <name:{d["name"]}, client: {self.company}>')
         r = self.locator.session.post(self.locator.HOST + '/administrator/objects/create', params)
         soup = BeautifulSoup(r.text, 'html.parser')
         error_strings = [i.text for i in soup('div', 'error')]
@@ -212,7 +209,7 @@ class Client:
         
 
     def create_sim(self, sim_card: Sim_Card) -> None:
-        logger.info(f'Criando SIM card no Locator. <tel: {sim_card.line}, client: {self.company}')
+        print(f'Criando SIM card no Locator. <tel: {sim_card.line}, client: {self.company}')
         params = {
             'service_pr': str(self.locator._service_pr),
             'service_provider': str(self.locator._service_provider),
