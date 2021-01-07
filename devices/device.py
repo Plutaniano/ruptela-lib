@@ -1,7 +1,8 @@
-from typing import *
-from packaging import version
-import time
 import re
+import time
+from typing import *
+from time import sleep
+from packaging import version
 
 import progressbar
 import serial
@@ -53,8 +54,8 @@ class Device:
 
     def update(self) -> None:
         """
-        Method for updating the device. Will check if the firmware currently
-        in the device is more recent or equal to the most recent firmware avaiable
+        Method for updating the device. Will check if the firmware version currently
+        in the device is greater or equal to the firmware avaiable in Device.firmwares
         before actually writing anything to the device.
         """
         if self.fw_version < self.fw_file.version:
@@ -70,10 +71,10 @@ class Device:
         Method for writing the firmware bytes to the device. Performs no checks.
         If you want to update your device, use .update() instead.
         """
-        with self.ser:
-            self.ser.write(b'|FU_STRT*\r\n')
+        with self.ser as ser:
+            ser.write(b'|FU_STRT*\r\n')
             expected = b'*FU_OK|\r\n'
-            incoming = self.ser.readline()
+            incoming = ser.readline()
             if incoming != expected:
                 raise ValueError(f'valor lido: {incoming}, esperado: {expected}')
             print('Atualização iniciada.')
@@ -81,26 +82,29 @@ class Device:
             self.fwstatus = 0
             for p in progressbar.progressbar(self.fw_file.data_packets):
                 self.fwstatus += 100//len(self.fw_file.data_packets)
-                self.ser.write(b'|FU_PCK*' + p.format() + b'\r\n')
+                ser.write(b'|FU_PCK*' + p.format() + b'\r\n')
                 expected = b'*FU_OK|' + p.idf() + b'\r\n'
-                incoming = self.ser.read(len(expected))
+                incoming = ser.read(len(expected))
                 if incoming != expected:
                     raise ValueError(f'valor lido: {incoming}, esperado: {expected}')
 
 
             print('Escrevendo firmware...')
-            self.ser.write(b'|FU_WRITE*\r\n')
+            ser.write(b'|FU_WRITE*\r\n')
             expected = b'*FU_OK|\r\n'
-            incoming = self.ser.read(len(expected))
+            incoming = ser.read(len(expected))
 
             if incoming != expected:
                 raise ValueError('Erro escrevendo firmware. Esperado: {expected}, recebido: {incoming}')
             else:
                 self.fwstatus = 'Firmware gravado com sucesso.'
                 print('Aguardando reset.')
-                time.sleep(18)
+                time.sleep(30)
                 print('Sucesso.')
-            self.ser.write(b'|FU_END*')
+            while self.ser.port not in [i.device for i in comports()]:
+                pass
+            sleep(2)
+            #self.ser.write(b'|FU_END*')
             return 
     
     def set_config(self, file: str = '') -> None:
@@ -183,7 +187,10 @@ class Device:
 
 class Eco4S(Device):
     """
-    Class for the FM-Eco4 light+ S
+    For the devices:    FM-Eco4 light S
+                        FM-Eco4 light+ S
+                        FM-Eco4+ S
+                        FM-Eco4+ E S
     """
     device = 'Eco4S'
     config_ext = 'fk4c'
@@ -205,7 +212,10 @@ Device.children.add(Eco4S)
 
 class Eco4light(Device):
     """
-    Class for the FM-Eco4 light+ S
+    For the devices:    FM-Eco4 light
+                        FM-Eco4 light+ 
+                        FM-Eco4 light 3G
+                        FM-Eco4 light+ 3G
     """
 
     device = 'Eco4light'
@@ -237,7 +247,7 @@ def DeviceFactory(comport='') -> Union[Eco4light, Eco4S]:
 
     if comport == '' and len(com_ports) == 1:
         comport = com_ports[0]
-
+        
     if comport not in com_ports:
         raise PortNotFoundError
     else:
