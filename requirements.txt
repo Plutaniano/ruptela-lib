@@ -2,7 +2,7 @@ matplotlib==3.3.1
 packaging==20.4
 selenium==3.141.0
 webdriver_manager==3.2.2
-requests==2.24.0
+requests==2.32.0
 crccheck==0.6
 beautifulsoup4==4.9.3
 progressbar33==2.4
